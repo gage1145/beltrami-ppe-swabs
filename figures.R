@@ -15,6 +15,7 @@ ggplot(metadata, aes(`Sample IDs`, RAF, fill = Timing)) +
     axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
     legend.position = "bottom"
   )
+ggsave("RAF.png", path = "figures", width = 16, height = 6)
 
 
 # Plate Views -------------------------------------------------------------
