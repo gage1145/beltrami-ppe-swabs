@@ -78,8 +78,6 @@ metadata <- readr::read_csv("data/metadata.csv", name_repair = "minimal") %>%
 
 write.csv(metadata, "data/updated_metadata.csv", row.names = FALSE)
 
-ggplot(metadata, aes(`Sample IDs`, MPR, fill = Zone)) +
-  geom_boxplot() +
-  facet_grid(rows = ~Timing, scales = "free_x")
+
 
 
