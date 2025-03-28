@@ -2,6 +2,7 @@ library(quicR)
 library(dplyr)
 library(stringr)
 library(ggplot2)
+library(tidyr)
 
 
 
@@ -62,19 +63,30 @@ metadata <- readr::read_csv("data/metadata.csv", name_repair = "minimal") %>%
   mutate(
     `Sample IDs` = str_split_i(`Process ID`, "-", 2)
   ) %>%
-  tidyr::separate_wider_delim(
+  separate_wider_delim(
     Comment, "; ", names = c("Surface", "Condition"), too_few = "align_start", too_many = "merge"
   ) %>%
-  tidyr::separate_wider_regex(
-    Condition, 
-    c(Zone = "[^ ]+ [^ ]+", " ", Timing = ".*") 
+  separate_wider_regex(
+    Condition, c(Zone = "[^ ]+ [^ ]+", " ", Timing = ".*") 
+  ) %>%
+  separate_wider_delim(
+    Timing, " of ", names = c("Timing", "Location"), too_few = "align_start"
+  ) %>%
+  separate_wider_delim(
+    Location, "; ", names = c("Location", "extra_note"), too_few = "align_start"
+  ) %>%
+  separate_wider_regex(
+    Surface, c(Side = "(?:left|right)?", Surface = ".*"), too_few = "align_start" 
   ) %>%
   mutate(
-    Timing = str_replace(Timing, " of dump site", "") %>% str_split_i(";", 1)
+    Side = na_if(Side, ""),
+    Location = ifelse(Zone == "negative site", "negative site", Location),
+    Location = ifelse(is.na(Location), "dump site", Location)
   ) %>%
   relocate(c(`Sample IDs`), .before = 1) %>%
   filter(!is.na(`Run date`)) %>%
   left_join(lists[[3]], by = "Sample IDs")
+
 
 write.csv(metadata, "data/updated_metadata.csv", row.names = FALSE)
 
