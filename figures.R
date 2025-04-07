@@ -7,8 +7,21 @@ library(readr)
 
 
 
-data <- readr::read_csv("data/updated_metadata.csv", name_repair = "minimal") %>%
-  mutate(`Sample IDs` = as.factor(`Sample IDs`))
+data <- read_csv("data/updated_metadata.csv", name_repair = "minimal") %>%
+  mutate_at(c("Sample IDs", "Technician"), as.factor) %>%
+  mutate(
+    Timing = factor(Timing, levels = c("pre sampling", "post sampling")),
+    Surface = factor(
+      Surface,
+      levels = c(
+        "blank sample", "tyvek leg", "plastic boot", "boot side", "boot bottom"
+      )
+    ),
+    Location = factor(
+      Location, 
+      levels = c("negative site", "perimeter", "dump site")
+    )
+  )
 
 
 ggplot(data, aes(`Sample IDs`, RAF, fill = Timing)) +
