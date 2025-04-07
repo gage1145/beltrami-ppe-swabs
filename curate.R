@@ -61,7 +61,8 @@ for (i in 1:length(lists)) {
 
 metadata <- readr::read_csv("data/metadata.csv", name_repair = "minimal") %>%
   mutate(
-    `Sample IDs` = str_split_i(`Process ID`, "-", 2)
+    `Sample IDs` = str_split_i(`Process ID`, "-", 2),
+    Technician = str_sub(`Field ID`, 1, 2)
   ) %>%
   separate_wider_delim(
     Comment, "; ", names = c("Surface", "Condition"), too_few = "align_start", too_many = "merge"
@@ -83,7 +84,7 @@ metadata <- readr::read_csv("data/metadata.csv", name_repair = "minimal") %>%
     Location = ifelse(Zone == "negative site", "negative site", Location),
     Location = ifelse(is.na(Location), "dump site", Location)
   ) %>%
-  relocate(c(`Sample IDs`), .before = 1) %>%
+  relocate(c(`Sample IDs`, Technician), .before = 1) %>%
   filter(!is.na(`Run date`)) %>%
   left_join(lists[[3]], by = "Sample IDs")
 
