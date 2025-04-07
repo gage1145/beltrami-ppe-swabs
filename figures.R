@@ -45,15 +45,48 @@ density_theme <- theme(
     legend.text = element_text(size = 12),
     legend.position = "bottom"
   )
+
+
+
+# Box Plots ---------------------------------------------------------------
+
+
+
+data %>%
+  filter(Timing != "post boot decon") %>%
+  ggplot(aes(Surface, RAF, color = Location)) +
+  geom_boxplot(fill = NA, size = 1) +
+  scale_color_manual(values = c("darkcyan", "darkorange", "maroon")) +
+  ggtitle("Surface RAFs by Location") +
+  facet_grid(
+    cols = vars(Timing), 
+    rows = vars(Technician), 
+    scales = "free_x", 
+    space = "free_x"
+  ) +
+  box_theme
 # ggsave("RAF.png", path = "figures", width = 16, height = 6)
 
-ggplot(data, aes(Surface, RAF, fill = Timing)) +
-  geom_boxplot(position = position_dodge2(preserve = "single")) +
-  facet_grid(cols = vars(Location), scales = "free_x", space = "free_x") +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1),
-    legend.position = "bottom"
-  )
+
+data %>%
+  filter(Timing != "post boot decon") %>%
+  ggplot(aes(Surface, RAF, color = Location)) +
+  geom_boxplot(fill = NA, size = 1) +
+  scale_color_manual(values = c("darkcyan", "darkorange", "maroon")) +
+  facet_grid(cols = vars(Timing), scales = "free_x", space = "free_x") +
+  box_theme
+
+
+data %>%
+  filter(Timing != "post boot decon") %>%
+  ggplot(aes(Location, RAF, fill = Timing)) +
+  geom_violin(size = 1) +
+  # scale_color_manual(values = c("darkcyan", "darkorange", "maroon")) +
+  facet_grid(cols = vars(Surface), scales = "free_x", space = "free_x") +
+  box_theme
+
+
+
 
 
 # Plate Views -------------------------------------------------------------
