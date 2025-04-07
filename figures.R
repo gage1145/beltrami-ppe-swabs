@@ -23,12 +23,26 @@ data <- read_csv("data/updated_metadata.csv", name_repair = "minimal") %>%
     )
   )
 
+box_theme <- theme(
+  plot.title = element_text(size = 16, hjust = 0.5, face = "bold"),
+  axis.title.x = element_blank(),
+  axis.title.y = element_text(size = 14),
+  axis.text = element_text(size = 12),
+  axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
+  legend.title = element_text(size = 12),
+  legend.text = element_text(size = 12),
+  legend.position = "bottom",
+  strip.text = element_text(size = 14)
+)
 
-ggplot(data, aes(`Sample IDs`, RAF, fill = Timing)) +
-  geom_boxplot() +
-  facet_grid(rows = vars(Zone), cols = vars(Surface), scales = "free_x", space = "free_x") +
-  theme(
+density_theme <- theme(
+    plot.title = element_text(size = 16, hjust = 0.5, face = "bold"),
+    axis.title.x = element_text(size = 14),
+    axis.title.y = element_blank(),
+    axis.text = element_text(size = 12),
     axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
+    legend.title = element_text(size = 12),
+    legend.text = element_text(size = 12),
     legend.position = "bottom"
   )
 # ggsave("RAF.png", path = "figures", width = 16, height = 6)
