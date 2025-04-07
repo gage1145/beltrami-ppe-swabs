@@ -87,6 +87,54 @@ data %>%
 
 
 
+# Density Plots -----------------------------------------------------------
+
+
+
+# Surface Density Plots
+data %>%
+  filter(Timing != "post boot decon") %>%
+  ggplot(aes(RAF, forcats::fct_rev(Surface), fill = Timing)) +
+  # geom_boxplot(fill = NA, size = 1) +
+  # geom_jitter(width = 0.1) +
+  geom_density_ridges(alpha = 0.5) +
+  scale_fill_manual(values = c("cyan", "maroon")) +
+  # facet_grid(rows = vars(Location), scales = "free_x", space = "free_x") +
+  ggtitle("Density Plots of Surface RAFs by Sample Timing") +
+  density_theme
+ggsave("surface_density.png", path = "figures", width = 12, height = 8)
+
+
+# Technician Density Plots
+data %>%
+  filter(Timing != "post boot decon") %>%
+  ggplot(aes(RAF, Technician, fill = Timing)) +
+  geom_density_ridges(alpha = 0.5) +
+  scale_fill_manual(values = c("cyan", "maroon")) +
+  ggtitle("Density Plots of Technician RAFs by Sample Timing") +
+  density_theme
+ggsave("technician_density.png", path = "figures", width = 12, height = 8)
+
+
+# Surface Density Plots
+data %>%
+  filter(Timing != "post boot decon") %>%
+  # mutate(
+  #   Location = as.character(Location),
+  #   Location = ifelse(
+  #     Location == "perimeter", "negative site", Location
+  #   ) %>%
+  #     factor(levels = c("negative site", "dump site"))
+  # ) %>%
+  ggplot(aes(RAF, forcats::fct_rev(Surface), fill = Location, linetype = Timing)) +
+  geom_density_ridges(alpha = 0.5, linewidth = 1) +
+  # scale_fill_manual(values = c("cyan", "maroon")) +
+  ggtitle("Density Plots of Surface RAFs by Location & Timing") +
+  big_theme
+ggsave("surface_density.png", path = "figures", width = 12, height = 8)
+
+
+
 
 
 # Plate Views -------------------------------------------------------------
