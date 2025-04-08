@@ -1,6 +1,6 @@
 library(dplyr)
 library(ggplot2)
-library(quicR)
+# library(quicR)
 library(ggridges)
 library(readr)
 
@@ -10,16 +10,31 @@ library(readr)
 data <- read_csv("data/updated_metadata.csv", name_repair = "minimal") %>%
   mutate_at(c("Sample IDs", "Technician"), as.factor) %>%
   mutate(
-    Timing = factor(Timing, levels = c("pre sampling", "post sampling")),
+    Timing = factor(
+      Timing, 
+      levels = c(
+        "pre sampling", 
+        "post sampling"
+      )
+    ),
     Surface = factor(
       Surface,
       levels = c(
-        "blank sample", "tyvek leg", "plastic boot", "boot side", "boot bottom"
+        "blank sample", 
+        "tyvek leg", 
+        "plastic boot", 
+        "boot side", 
+        "boot bottom"
       )
     ),
+    # Location = ifelse(Location == "perimeter", "negative site", Location),
     Location = factor(
       Location, 
-      levels = c("negative site", "perimeter", "dump site")
+      levels = c(
+        "negative site", 
+        "perimeter",
+        "dump site"
+      )
     )
   )
 
@@ -60,7 +75,7 @@ data %>%
   ggtitle("Surface RAFs by Location") +
   facet_grid(
     cols = vars(Timing), 
-    rows = vars(Technician), 
+    # rows = vars(Technician), 
     scales = "free_x", 
     space = "free_x"
   ) +
@@ -77,13 +92,13 @@ data %>%
   box_theme
 
 
-data %>%
-  filter(Timing != "post boot decon") %>%
-  ggplot(aes(Location, RAF, fill = Timing)) +
-  geom_violin(size = 1) +
-  # scale_color_manual(values = c("darkcyan", "darkorange", "maroon")) +
-  facet_grid(cols = vars(Surface), scales = "free_x", space = "free_x") +
-  box_theme
+# data %>%
+#   filter(Timing != "post boot decon") %>%
+#   ggplot(aes(Location, RAF, fill = Timing)) +
+#   geom_violin(size = 1) +
+#   # scale_color_manual(values = c("darkcyan", "darkorange", "maroon")) +
+#   facet_grid(cols = vars(Surface), scales = "free_x", space = "free_x") +
+#   box_theme
 
 
 
@@ -94,15 +109,16 @@ data %>%
 # Surface Density Plots
 data %>%
   filter(Timing != "post boot decon") %>%
-  ggplot(aes(RAF, forcats::fct_rev(Surface), fill = Timing)) +
+  ggplot(aes(MPR, forcats::fct_rev(Surface), fill = Timing)) +
   # geom_boxplot(fill = NA, size = 1) +
   # geom_jitter(width = 0.1) +
   geom_density_ridges(alpha = 0.5) +
   scale_fill_manual(values = c("cyan", "maroon")) +
-  # facet_grid(rows = vars(Location), scales = "free_x", space = "free_x") +
+  coord_cartesian(expand = FALSE) +
+  # facet_grid(cols = vars(Location), scales = "free_x", space = "free_x") +
   ggtitle("Density Plots of Surface RAFs by Sample Timing") +
   density_theme
-ggsave("surface_density.png", path = "figures", width = 12, height = 8)
+# ggsave("surface_timing_density.png", path = "figures", width = 12, height = 8)
 
 
 # Technician Density Plots
@@ -111,9 +127,12 @@ data %>%
   ggplot(aes(RAF, Technician, fill = Timing)) +
   geom_density_ridges(alpha = 0.5) +
   scale_fill_manual(values = c("cyan", "maroon")) +
+  coord_cartesian(expand = FALSE) +
   ggtitle("Density Plots of Technician RAFs by Sample Timing") +
   density_theme
-ggsave("technician_density.png", path = "figures", width = 12, height = 8)
+# ggsave(
+#   "technician_timing_density.png", path = "figures", width = 12, height = 8
+# )
 
 
 # Surface Density Plots
@@ -126,12 +145,19 @@ data %>%
   #   ) %>%
   #     factor(levels = c("negative site", "dump site"))
   # ) %>%
-  ggplot(aes(RAF, forcats::fct_rev(Surface), fill = Location, linetype = Timing)) +
-  geom_density_ridges(alpha = 0.5, linewidth = 1) +
-  # scale_fill_manual(values = c("cyan", "maroon")) +
+  ggplot(
+    aes(RAF, forcats::fct_rev(Surface), fill = Location, linetype = Timing)
+  ) +
+  geom_density_ridges(alpha = 0.5, linewidth = 0.75) +
+  scale_fill_manual(values = c("cyan", "darkorange", "maroon")) +
   ggtitle("Density Plots of Surface RAFs by Location & Timing") +
-  big_theme
-ggsave("surface_density.png", path = "figures", width = 12, height = 8)
+  density_theme
+# ggsave(
+#   "surface_location_timing_density.png", 
+#   path = "figures", 
+#   width = 12, 
+#   height = 8
+# )
 
 
 
