@@ -15,6 +15,7 @@ for (file in files) {
   meta <- organize_tables(file) %>%
     convert_tables() %>%
     mutate(
+      `Sample IDs` = trimws(`Sample IDs`, "left"),
       Dilutions = -log10(as.numeric(Dilutions)),
       Date = str_split_i(file, "_", 1) %>% str_split_i("/", 2),
       Reader = str_split_i(file, "_", 2)
@@ -59,7 +60,7 @@ for (i in 1:length(lists)) {
 
 
 
-metadata <- readr::read_csv("data/metadata.csv", name_repair = "minimal") %>%
+metadata <- readr::read_csv("data/metadata1.csv", name_repair = "minimal") %>%
   mutate(
     `Sample IDs` = str_split_i(`Process ID`, "-", 2),
     Technician = str_sub(`Field ID`, 1, 2)
@@ -68,7 +69,7 @@ metadata <- readr::read_csv("data/metadata.csv", name_repair = "minimal") %>%
     Comment, "; ", names = c("Surface", "Condition"), too_few = "align_start", too_many = "merge"
   ) %>%
   separate_wider_regex(
-    Condition, c(Zone = "[^ ]+ [^ ]+", " ", Timing = ".*") 
+    Condition, c(Zone = "[^ ]+ [^ ]+", " ", Timing = ".*")
   ) %>%
   separate_wider_delim(
     Timing, " of ", names = c("Timing", "Location"), too_few = "align_start"
@@ -77,7 +78,7 @@ metadata <- readr::read_csv("data/metadata.csv", name_repair = "minimal") %>%
     Location, "; ", names = c("Location", "extra_note"), too_few = "align_start"
   ) %>%
   separate_wider_regex(
-    Surface, c(Side = "(?:left|right)?", Surface = ".*"), too_few = "align_start" 
+    Surface, c(Side = "(?:left |right )?", Surface = ".*"), too_few = "align_start" 
   ) %>%
   mutate(
     Side = na_if(Side, ""),
@@ -85,7 +86,7 @@ metadata <- readr::read_csv("data/metadata.csv", name_repair = "minimal") %>%
     Location = ifelse(is.na(Location), "dump site", Location)
   ) %>%
   relocate(c(`Sample IDs`, Technician), .before = 1) %>%
-  filter(!is.na(`Run date`)) %>%
+  # filter(!is.na(`Run date`)) 
   left_join(lists[[3]], by = "Sample IDs")
 
 

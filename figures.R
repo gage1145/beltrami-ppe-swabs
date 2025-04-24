@@ -68,7 +68,7 @@ density_theme <- theme(
 
 
 data %>%
-  filter(Timing != "post boot decon") %>%
+  filter(Timing != "post boot decon", !is.na(Surface)) %>%
   ggplot(aes(Surface, RAF, color = Location)) +
   geom_boxplot(fill = NA, size = 1) +
   scale_color_manual(values = c("darkcyan", "darkorange", "maroon")) +
@@ -79,6 +79,7 @@ data %>%
     scales = "free_x", 
     space = "free_x"
   ) +
+  scale_y_continuous(limits=c(0.02,0.04)) +
   box_theme
 # ggsave("RAF.png", path = "figures", width = 16, height = 6)
 
