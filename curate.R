@@ -11,6 +11,8 @@ lists <- list(list(), list(), list())
 
 for (file in files) {
   
+  print(file)
+  
   # Retrieve the metadata.
   meta <- organize_tables(file) %>%
     convert_tables() %>%
@@ -87,7 +89,8 @@ metadata <- readr::read_csv("data/metadata1.csv", name_repair = "minimal") %>%
   ) %>%
   relocate(c(`Sample IDs`, Technician), .before = 1) %>%
   # filter(!is.na(`Run date`)) 
-  left_join(lists[[3]], by = "Sample IDs")
+  left_join(lists[[3]], by = "Sample IDs") %>%
+  mutate_all(trimws)
 
 
 write.csv(metadata, "data/updated_metadata.csv", row.names = FALSE)
