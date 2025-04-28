@@ -7,36 +7,20 @@ library(readr)
 
 
 
-data <- read_csv("data/updated_metadata.csv", name_repair = "minimal") %>%
-  mutate_at(c("Sample IDs", "Technician"), as.factor) %>%
+data <- read.csv("data/updated_metadata.csv", check.names = FALSE) %>%
+  filter(!is.na(Technician)) %>%
   mutate(
     Timing = factor(
-      Timing, 
-      levels = c(
-        "pre sampling", 
-        "post sampling"
-      )
+      Timing, levels = c("pre sampling", "post sampling", "post decon")
+    ),
+    Location = factor(
+      Location, levels = c("negative site", "dump site", "perimeter")
     ),
     Surface = factor(
-      Surface,
-      levels = c(
-        "blank sample", 
-        "tyvek leg", 
-        "plastic boot", 
-        "boot side", 
-        "boot bottom"
-      )
-    ),
-    # Location = ifelse(Location == "perimeter", "negative site", Location),
-    Location = factor(
-      Location, 
-      levels = c(
-        "negative site", 
-        "perimeter",
-        "dump site"
-      )
+      Surface, levels = c("blank sample", "tyvek leg", "plastic boot", "boot side", "boot bottom")
     )
   )
+results <- read.csv("data/results.csv", check.names = FALSE)
 
 box_theme <- theme(
   plot.title = element_text(size = 16, hjust = 0.5, face = "bold"),
@@ -68,38 +52,40 @@ density_theme <- theme(
 
 
 data %>%
-  filter(Timing != "post boot decon", !is.na(Surface)) %>%
-  ggplot(aes(Surface, RAF, color = Location)) +
+  ggplot(aes(Timing, MPR, color = Location)) +
   geom_boxplot(fill = NA, size = 1) +
+  facet_grid(cols = vars(Surface)) +
   scale_color_manual(values = c("darkcyan", "darkorange", "maroon")) +
-  ggtitle("Surface RAFs by Location") +
-  facet_grid(
-    cols = vars(Timing), 
-    # rows = vars(Technician), 
-    scales = "free_x", 
-    space = "free_x"
-  ) +
-  scale_y_continuous(limits=c(0.02,0.04)) +
+  # ggtitle("Surface RAFs by Location") +
+  # scale_y_continuous(limits=c(1,6)) +
   box_theme
-# ggsave("RAF.png", path = "figures", width = 16, height = 6)
-
 
 data %>%
-  filter(Timing != "post boot decon") %>%
-  ggplot(aes(Surface, RAF, color = Location)) +
+  ggplot(aes(Timing, MPR, color = Surface)) +
   geom_boxplot(fill = NA, size = 1) +
-  scale_color_manual(values = c("darkcyan", "darkorange", "maroon")) +
-  facet_grid(cols = vars(Timing), scales = "free_x", space = "free_x") +
+  facet_grid(cols = vars(Location)) +
+  scale_color_manual(values = c("darkcyan", "cyan", "forestgreen", "darkorange", "maroon")) +
+  ggtitle("Surface RAFs by Location") +
+  scale_y_continuous(limits=c(1,6)) +
   box_theme
 
+data %>%
+  ggplot(aes(Surface, MPR, color = Timing)) +
+  geom_boxplot(fill = NA, size = 1) +
+  facet_grid(cols = vars(Location)) +
+  scale_color_manual(values = c("darkcyan", "darkorange", "maroon")) +
+  ggtitle("Surface RAFs by Location") +
+  scale_y_continuous(limits=c(1,6)) +
+  box_theme
 
-# data %>%
-#   filter(Timing != "post boot decon") %>%
-#   ggplot(aes(Location, RAF, fill = Timing)) +
-#   geom_violin(size = 1) +
-#   # scale_color_manual(values = c("darkcyan", "darkorange", "maroon")) +
-#   facet_grid(cols = vars(Surface), scales = "free_x", space = "free_x") +
-#   box_theme
+data %>%
+  ggplot(aes(Location, MPR, color = Timing)) +
+  geom_boxplot(fill = NA, size = 1) +
+  facet_grid(cols = vars(Surface)) +
+  scale_color_manual(values = c("darkcyan", "darkorange", "maroon")) +
+  ggtitle("Surface RAFs by Location") +
+  scale_y_continuous(limits=c(0,7)) +
+  box_theme
 
 
 
@@ -109,36 +95,19 @@ data %>%
 
 # Surface Density Plots
 data %>%
-  filter(Timing != "post boot decon") %>%
-  ggplot(aes(MPR, forcats::fct_rev(Surface), fill = Timing)) +
-  # geom_boxplot(fill = NA, size = 1) +
-  # geom_jitter(width = 0.1) +
+  ggplot(aes(RAF, Timing, fill = Location)) +
   geom_density_ridges(alpha = 0.5) +
-  scale_fill_manual(values = c("cyan", "maroon")) +
+  scale_fill_manual(values = c("forestgreen", "darkorange", "maroon")) +
   coord_cartesian(expand = FALSE) +
+  # scale_x_continuous(limits = c(1, 6)) +
   # facet_grid(cols = vars(Location), scales = "free_x", space = "free_x") +
   ggtitle("Density Plots of Surface RAFs by Sample Timing") +
   density_theme
 # ggsave("surface_timing_density.png", path = "figures", width = 12, height = 8)
 
 
-# Technician Density Plots
-data %>%
-  filter(Timing != "post boot decon") %>%
-  ggplot(aes(RAF, Technician, fill = Timing)) +
-  geom_density_ridges(alpha = 0.5) +
-  scale_fill_manual(values = c("cyan", "maroon")) +
-  coord_cartesian(expand = FALSE) +
-  ggtitle("Density Plots of Technician RAFs by Sample Timing") +
-  density_theme
-# ggsave(
-#   "technician_timing_density.png", path = "figures", width = 12, height = 8
-# )
-
-
 # Surface Density Plots
 data %>%
-  filter(Timing != "post boot decon") %>%
   # mutate(
   #   Location = as.character(Location),
   #   Location = ifelse(
