@@ -14,7 +14,7 @@ data <- read.csv("data/updated_metadata.csv", check.names = FALSE) %>%
       Timing, levels = c("pre sampling", "post sampling", "post decon")
     ),
     Location = factor(
-      Location, levels = c("negative site", "dump site", "perimeter")
+      Location, levels = c("negative site", "perimeter", "dump site")
     ),
     Surface = factor(
       Surface, levels = c("blank sample", "tyvek leg", "plastic boot", "boot side", "boot bottom")
@@ -39,7 +39,7 @@ density_theme <- theme(
     axis.title.x = element_text(size = 14),
     axis.title.y = element_blank(),
     axis.text = element_text(size = 12),
-    axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
+    # axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
     legend.title = element_text(size = 12),
     legend.text = element_text(size = 12),
     legend.position = "bottom"
@@ -95,39 +95,36 @@ data %>%
 
 # Surface Density Plots
 data %>%
-  ggplot(aes(RAF, Timing, fill = Location)) +
-  geom_density_ridges(alpha = 0.5) +
-  scale_fill_manual(values = c("forestgreen", "darkorange", "maroon")) +
-  coord_cartesian(expand = FALSE) +
-  # scale_x_continuous(limits = c(1, 6)) +
-  # facet_grid(cols = vars(Location), scales = "free_x", space = "free_x") +
-  ggtitle("Density Plots of Surface RAFs by Sample Timing") +
+  arrange(Location) %>%
+  filter(Timing != "post decon") %>%
+  ggplot(aes(MPR, Location, fill = Timing)) +
+  geom_density_ridges(alpha = 0.5, scale = 1.2) +
+  scale_fill_manual(values = c("darkcyan", "darkred", "darkorange")) +
+  scale_y_discrete(expand = expansion(mult = c(0.025,0.5))) +
+  ggtitle("Density Plots of Surface MPRs by Sample Timing") +
   density_theme
-# ggsave("surface_timing_density.png", path = "figures", width = 12, height = 8)
+ggsave("location_timing_density.png", path = "figures", width = 14, height = 8)
 
 
 # Surface Density Plots
 data %>%
-  # mutate(
-  #   Location = as.character(Location),
-  #   Location = ifelse(
-  #     Location == "perimeter", "negative site", Location
-  #   ) %>%
-  #     factor(levels = c("negative site", "dump site"))
-  # ) %>%
+  filter(Timing != "post decon") %>%
+  arrange(Surface) %>%
   ggplot(
-    aes(RAF, forcats::fct_rev(Surface), fill = Location, linetype = Timing)
+    aes(MPR, fct_rev(Surface), fill = Location, linetype = Timing)
   ) +
-  geom_density_ridges(alpha = 0.5, linewidth = 0.75) +
-  scale_fill_manual(values = c("cyan", "darkorange", "maroon")) +
-  ggtitle("Density Plots of Surface RAFs by Location & Timing") +
+  geom_density_ridges(alpha = 0.5, linewidth = 0.75, scale = 1.2) +
+  scale_fill_manual(values = c("darkcyan", "darkred", "darkorange")) +
+  scale_y_discrete(expand = expansion(mult = c(0.025,0.35))) +
+  scale_x_continuous(limits = c(0, 10)) +
+  ggtitle("Density Plots of Surface MPRs by Location & Timing") +
   density_theme
-# ggsave(
-#   "surface_location_timing_density.png", 
-#   path = "figures", 
-#   width = 12, 
-#   height = 8
-# )
+ggsave(
+  "surface_location_timing_density.png",
+  path = "figures",
+  width = 14,
+  height = 8
+)
 
 
 
