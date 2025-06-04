@@ -1,0 +1,34 @@
+Field ID,Location,Timing,Surface,Surface Location,Side,Technician,Sample IDs,Process Date,Sample Type,Process ID
+1 JB LTV,perimeter,pre sampling,tyvek,leg,left,JB,961,5/7/2025,PPE Swab,S-961
+2 JB RTV,perimeter,pre sampling,tyvek,leg,right,JB,962,5/7/2025,PPE Swab,S-962
+3 JB LFB,perimeter,pre sampling,boot,,left,JB,963,5/7/2025,PPE Swab,S-963
+4 JB RFB,perimeter,pre sampling,boot,,right,JB,964,5/7/2025,PPE Swab,S-964
+5 TW LTV,perimeter,pre sampling,tyvek,leg,left,TW,965,5/7/2025,PPE Swab,S-965
+6 TW RTV,perimeter,pre sampling,tyvek,leg,right,TW,966,5/7/2025,PPE Swab,S-966
+7 TW LFB,perimeter,pre sampling,boot,,left,TW,967,5/7/2025,PPE Swab,S-967
+8 TW RFB,perimeter,pre sampling,boot,,right,TW,968,5/7/2025,PPE Swab,S-968
+9 DK LFW,perimeter,pre sampling,boot,,left,DK,969,5/7/2025,PPE Swab,S-969
+10 DK RFW,perimeter,pre sampling,boot,,right,DK,970,5/7/2025,PPE Swab,S-970
+11 BF1 Top,dump site,post sampling,bird feeder steel plate,,top,JB,971,5/7/2025,Bird Feeder Swab,S-971
+12 BF 1 Bottom,dump site,post sampling,bird feeder steel plate,,bottom,JB,972,5/7/2025,Bird Feeder Swab,S-972
+13 BF 2 Top,dump site,post sampling,bird feeder steel plate,,top,JB,973,5/7/2025,Bird Feeder Swab,S-973
+14 BF 2 bottom,dump site,post sampling,bird feeder steel plate,,bottom,JB,974,5/7/2025,Bird Feeder Swab,S-974
+15 BF3 Top,dump site,post sampling,bird feeder steel plate,,top,JB,975,5/7/2025,Bird Feeder Swab,S-975
+16 BF3 Bottom,dump site,post sampling,bird feeder steel plate,,bottom,JB,976,5/7/2025,Bird Feeder Swab,S-976
+17 BF4 Top,dump site,post sampling,bird feeder steel plate,,top,JB,977,5/7/2025,Bird Feeder Swab,S-977
+18 BF 4 Bottom,dump site,post sampling,bird feeder steel plate,,bottom,JB,978,5/7/2025,Bird Feeder Swab,S-978
+19 BF5 Top,dump site,post sampling,bird feeder steel plate,,top,JB,979,5/7/2025,Bird Feeder Swab,S-979
+20 BF5 Bottom,dump site,post sampling,bird feeder steel plate,,bottom,JB,980,5/7/2025,Bird Feeder Swab,S-980
+21 BF 6 Top,dump site,post sampling,bird feeder steel plate,,top,JB,981,5/7/2025,Bird Feeder Swab,S-981
+22 BF6 Bottom,dump site,post sampling,bird feeder steel plate,,bottom,JB,982,5/7/2025,Bird Feeder Swab,S-982
+23 Blank after BF1,dump site,post sampling,blank,,,JB,983,5/7/2025,PPE Swab,S-983
+24 Blank after BF3,dump site,post sampling,blank,,,JB,984,5/7/2025,PPE Swab,S-984
+25 Blank after BF5,dump site,post sampling,blank,,,JB,985,5/7/2025,PPE Swab,S-985
+26 JB LTV,dump site,post sampling,tyvek,,left,JB,986,5/7/2025,PPE Swab,S-986
+27 JB RTV,dump site,post sampling,tyvek,,right,JB,987,5/7/2025,PPE Swab,S-987
+28 JB LFB,dump site,post sampling,boot,,left,JB,988,5/7/2025,PPE Swab,S-988
+29 JB RFB,dump site,post sampling,boot,,right,JB,989,5/7/2025,PPE Swab,S-989
+30 TW LTV,dump site,post sampling,tyvek,leg,left,TW,990,5/7/2025,PPE Swab,S-990
+31 TW RTV,dump site,post sampling,tyvek,leg,right,TW,991,5/7/2025,PPE Swab,S-991
+32 TW LFB,dump site,post sampling,boot,,left,TW,992,5/7/2025,PPE Swab,S-992
+33 TW RFB,dump site,post sampling,boot,,right,TW,993,5/7/2025,PPE Swab,S-993

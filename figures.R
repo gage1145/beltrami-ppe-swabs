@@ -8,7 +8,7 @@ library(readr)
 
 
 data <- read.csv("data/updated_metadata.csv", check.names = FALSE) %>%
-  filter(!is.na(Technician)) %>%
+  filter(!is.na(Technician), `Sample Type` == "PPE Swab") %>%
   mutate(
     Timing = factor(
       Timing, levels = c("pre sampling", "post sampling", "post decon")
@@ -17,7 +17,7 @@ data <- read.csv("data/updated_metadata.csv", check.names = FALSE) %>%
       Location, levels = c("negative site", "perimeter", "dump site")
     ),
     Surface = factor(
-      Surface, levels = c("blank sample", "tyvek leg", "plastic boot", "boot side", "boot bottom")
+      Surface, levels = unique(Surface)
     )
   )
 results <- read.csv("data/results.csv", check.names = FALSE)
@@ -52,40 +52,44 @@ density_theme <- theme(
 
 
 data %>%
-  ggplot(aes(Timing, MPR, color = Location)) +
+  ggplot(aes(Timing, RAF, color = Location)) +
   geom_boxplot(fill = NA, size = 1) +
   facet_grid(cols = vars(Surface)) +
   scale_color_manual(values = c("darkcyan", "darkorange", "maroon")) +
-  # ggtitle("Surface RAFs by Location") +
-  # scale_y_continuous(limits=c(1,6)) +
+  scale_y_continuous(limits = c(0.013, 0.04)) +
+  ggtitle("Surface RAFs by Location") +
   box_theme
+ggsave("TLS_raf.png", path = "figures", width = 14, height = 8)
 
 data %>%
-  ggplot(aes(Timing, MPR, color = Surface)) +
+  ggplot(aes(Timing, RAF, color = Surface)) +
   geom_boxplot(fill = NA, size = 1) +
   facet_grid(cols = vars(Location)) +
-  scale_color_manual(values = c("darkcyan", "cyan", "forestgreen", "darkorange", "maroon")) +
+  scale_color_manual(values = c("darkcyan", "cyan3", "forestgreen", "darkorange", "maroon")) +
   ggtitle("Surface RAFs by Location") +
-  scale_y_continuous(limits=c(1,6)) +
+  scale_y_continuous(limits=c(0.013,0.04)) +
   box_theme
+ggsave("TSL_raf.png", path = "figures", width = 14, height = 8)
 
 data %>%
-  ggplot(aes(Surface, MPR, color = Timing)) +
+  ggplot(aes(Surface, RAF, color = Timing)) +
   geom_boxplot(fill = NA, size = 1) +
   facet_grid(cols = vars(Location)) +
   scale_color_manual(values = c("darkcyan", "darkorange", "maroon")) +
   ggtitle("Surface RAFs by Location") +
-  scale_y_continuous(limits=c(1,6)) +
+  scale_y_continuous(limits=c(0.013,0.04)) +
   box_theme
+ggsave("STL_raf.png", path = "figures", width = 14, height = 8)
 
 data %>%
-  ggplot(aes(Location, MPR, color = Timing)) +
+  ggplot(aes(Location, RAF, color = Timing)) +
   geom_boxplot(fill = NA, size = 1) +
   facet_grid(cols = vars(Surface)) +
   scale_color_manual(values = c("darkcyan", "darkorange", "maroon")) +
   ggtitle("Surface RAFs by Location") +
-  scale_y_continuous(limits=c(0,7)) +
+  scale_y_continuous(limits=c(0.013,0.04)) +
   box_theme
+ggsave("LTS_raf.png", path = "figures", width = 14, height = 8)
 
 
 

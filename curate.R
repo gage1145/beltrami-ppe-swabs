@@ -3,6 +3,7 @@ library(dplyr)
 library(stringr)
 library(ggplot2)
 library(tidyr)
+library(readr)
 
 
 
@@ -40,11 +41,11 @@ for (file in files) {
     real_list[[i]] <- real_list[[i]] %>%
       mutate(
         `Sample IDs` = meta$`Sample IDs`,
-        Date         = meta$Date,
+        `Rxn Date`   = meta$Date,
         Reader       = meta$Reader,
         Dilutions    = meta$Dilutions
       ) %>%
-      relocate(c(Dilutions, Date, Reader), .after = `Sample IDs`)
+      relocate(c(Dilutions, `Rxn Date`, Reader), .after = `Sample IDs`)
     lists[[i]] <- append(lists[[i]], list(real_list[[i]]))
   }
 }
@@ -62,25 +63,42 @@ for (i in 1:length(lists)) {
 
 
 
-metadata <- readr::read_csv("data/metadata1.csv", name_repair = "minimal") %>%
+new_metadata <- read_csv("data/new_metadata.csv", name_repair = "minimal") %>%
+  mutate(`Sample IDs` = as.character(`Sample IDs`))
+
+metadata <- read_csv("data/metadata.csv", name_repair = "minimal") %>%
   mutate(
     `Sample IDs` = str_split_i(`Process ID`, "-", 2),
     Technician = str_sub(`Field ID`, 1, 2)
   ) %>%
   separate_wider_delim(
-    Comment, "; ", names = c("Surface", "Condition"), too_few = "align_start", too_many = "merge"
+    Comment, 
+    "; ", 
+    names = c("Surface", "Condition"), 
+    too_few = "align_start", 
+    too_many = "merge"
   ) %>%
   separate_wider_regex(
-    Condition, c(Zone = "[^ ]+ [^ ]+", " ", Timing = ".*")
+    Condition, 
+    c(Zone = "[^ ]+ [^ ]+", " ", Timing = ".*")
   ) %>%
   separate_wider_delim(
-    Timing, " of ", names = c("Timing", "Location"), too_few = "align_start"
+    Timing, 
+    " of ", 
+    names = c("Timing", "Location"), 
+    too_few = "align_start"
   ) %>%
   separate_wider_delim(
-    Location, "; ", names = c("Location", "extra_note"), too_few = "align_start"
+    Location, 
+    "; ", 
+    names = c("Location", "extra_note"), 
+    too_few = "align_start"
   ) %>%
   separate_wider_regex(
     Surface, c(Side = "(?:left |right )?", Surface = ".*"), too_few = "align_start" 
+  ) %>%
+  separate_wider_delim(
+    Surface, " ", names = c("Surface", "Surface Location"), too_few = "align_start", too_many = "merge"
   ) %>%
   mutate(
     Side = na_if(Side, ""),
@@ -88,6 +106,7 @@ metadata <- readr::read_csv("data/metadata1.csv", name_repair = "minimal") %>%
     Location = ifelse(is.na(Location), "dump site", Location)
   ) %>%
   relocate(c(`Sample IDs`, Technician), .before = 1) %>%
+  bind_rows(new_metadata) %>%
   # filter(!is.na(`Run date`)) 
   left_join(lists[[3]], by = "Sample IDs") %>%
   mutate_all(trimws)
