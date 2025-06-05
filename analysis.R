@@ -5,6 +5,16 @@ library(tidyverse)
 
 
 
+# Function to get tidy pairwise comparisons for a given factor
+get_pairwise_comparisons <- function(factor_name, model) {
+  em <- emmeans(model, as.formula(paste("pairwise ~", factor_name)))
+  tidy(em$contrasts) %>%
+    mutate(Factor = factor_name) %>%
+    {if ("adj.p.value" %in% colnames(.)) rename(., p.value = adj.p.value) else .}
+}
+
+
+
 # Load in the data --------------------------------------------------------
 
 
@@ -69,14 +79,6 @@ model_MS <- glm(
 # )
 
 # contrast(emmeans(model_MPR, pairwise ~ Location), interaction = TRUE)
-
-# Function to get tidy pairwise comparisons for a given factor
-get_pairwise_comparisons <- function(factor_name, model) {
-  em <- emmeans(model, as.formula(paste("pairwise ~", factor_name)))
-  tidy(em$contrasts) %>%
-    mutate(Factor = factor_name) %>%
-    {if ("adj.p.value" %in% colnames(.)) rename(., p.value = adj.p.value) else .}
-}
 
 # Apply to each fixed effect
 factors <- c("Surface", "Location", "Timing")
