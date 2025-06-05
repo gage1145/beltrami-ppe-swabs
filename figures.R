@@ -7,6 +7,79 @@ library(readr)
 
 
 
+# Estimate Plots ----------------------------------------------------------
+
+
+
+# Total Results
+results <- read.csv("data/results.csv", check.names = FALSE)
+results %>%
+  arrange(contrast) %>%
+  mutate(p.value = signif(p.value, 4)) %>%
+  ggplot(
+    aes(
+      fct_inorder(contrast), 
+      estimate, 
+      ymin = estimate - std.error, 
+      ymax = estimate + std.error,
+      color = p.value < 0.05
+    )
+  ) +
+  geom_pointrange(
+    position = position_dodge(width = 0.4), size = 1, linewidth = 1
+  ) +
+  geom_hline(yintercept = 0, linewidth = 1.2, linetype = "dashed") +
+  geom_label(aes(label = p.value), nudge_x = 0.3, size = 3) +
+  facet_grid(term ~ metric, scale = "free", space = "free_y") +
+  scale_colour_manual(values = c("navy", "darkred")) +
+  coord_flip() +
+  theme(
+    axis.title.y = element_blank(),
+    axis.text = element_text(size = 12),
+    axis.title.x = element_text(size = 14, face = "bold"),
+    strip.text = element_text(size = 14, face = "bold"),
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    legend.position = "bottom"
+  )
+ggsave("results.png", path = "figures", width = 8, height = 8)
+
+# Boot Results
+boot_results <- read.csv("data/boot_results.csv", check.names = FALSE)
+boot_results %>%
+  arrange(contrast) %>%
+  mutate(p.value = signif(p.value, 4)) %>%
+  ggplot(
+    aes(
+      fct_inorder(contrast), 
+      estimate, 
+      ymin = estimate - std.error, 
+      ymax = estimate + std.error,
+      color = p.value < 0.05
+    )
+  ) +
+  geom_pointrange(
+    position = position_dodge(width = 0.4), size = 1, linewidth = 1
+  ) +
+  geom_hline(yintercept = 0, linewidth = 1.2, linetype = "dashed") +
+  geom_label(aes(label = p.value), nudge_x = 0.3, size = 3) +
+  facet_grid(term ~ metric, scale = "free", space = "free_y") +
+  scale_colour_manual(values = c("navy", "darkred")) +
+  # scale_y_continuous(limits = c(-1, 1)) +
+  coord_flip() +
+  theme(
+    axis.title.y = element_blank(),
+    axis.text = element_text(size = 12),
+    axis.title.x = element_text(size = 14, face = "bold"),
+    strip.text = element_text(size = 14, face = "bold"),
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    legend.position = "bottom"
+  )
+ggsave("boot_results.png", path = "figures", width = 8, height = 8)
+
+
+
 data <- read.csv("data/updated_metadata.csv", check.names = FALSE) %>%
   filter(!is.na(Technician), `Sample Type` == "PPE Swab") %>%
   mutate(
@@ -101,8 +174,11 @@ ggsave("LTS_raf.png", path = "figures", width = 14, height = 8)
 data %>%
   arrange(Location) %>%
   filter(Timing != "post decon") %>%
-  ggplot(aes(MPR, Location, fill = Timing)) +
+  select(MPR, MS, Location, Timing) %>%
+  gather("key", "value", -c(Location, Timing)) %>%
+  ggplot(aes(value, Location, fill = Timing)) +
   geom_density_ridges(alpha = 0.5, scale = 1.2) +
+  facet_wrap(vars(key), nrow=2, scales = "free", strip.position = "right") +
   scale_fill_manual(values = c("darkcyan", "darkred", "darkorange")) +
   scale_y_discrete(expand = expansion(mult = c(0.025,0.5))) +
   ggtitle("Density Plots of Surface MPRs by Sample Timing") +
@@ -114,13 +190,14 @@ ggsave("location_timing_density.png", path = "figures", width = 14, height = 8)
 data %>%
   filter(Timing != "post decon") %>%
   arrange(Surface) %>%
-  ggplot(
-    aes(MPR, fct_rev(Surface), fill = Location, linetype = Timing)
-  ) +
+  select(MPR, MS, Surface, Location, Timing) %>%
+  gather("key", "value", -c(Surface, Location, Timing)) %>%
+  ggplot(aes(value, fct_rev(Surface), fill = Location, linetype = Timing)) +
   geom_density_ridges(alpha = 0.5, linewidth = 0.75, scale = 1.2) +
+  facet_wrap(vars(key), nrow=2, scales = "free", strip.position = "right") +
   scale_fill_manual(values = c("darkcyan", "darkred", "darkorange")) +
   scale_y_discrete(expand = expansion(mult = c(0.025,0.35))) +
-  scale_x_continuous(limits = c(0, 10)) +
+  # scale_x_continuous(limits = c(0, 10)) +
   ggtitle("Density Plots of Surface MPRs by Location & Timing") +
   density_theme
 ggsave(

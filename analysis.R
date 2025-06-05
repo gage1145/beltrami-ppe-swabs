@@ -99,75 +99,8 @@ write.csv(data, "data/analyzed.csv", row.names = FALSE)
 write.csv(results, "data/results.csv", row.names = FALSE)
 
 
-results %>%
-  arrange(contrast) %>%
-  mutate(p.value = signif(p.value, 4)) %>%
-  ggplot(
-    aes(
-      fct_inorder(contrast), 
-      estimate, 
-      ymin = estimate - std.error, 
-      ymax = estimate + std.error,
-      color = p.value < 0.05
-    )
-  ) +
-  geom_pointrange(
-    position = position_dodge(width = 0.4), size = 1, linewidth = 1
-  ) +
-  geom_hline(yintercept = 0, linewidth = 1.2, linetype = "dashed") +
-  geom_label(aes(label = p.value), nudge_x = 0.3, size = 3) +
-  facet_grid(term ~ metric, scale = "free", space = "free_y") +
-  scale_colour_manual(values = c("navy", "darkred")) +
-  # scale_y_continuous(limits = c(-1, 1)) +
-  coord_flip() +
-  theme(
-    axis.title.y = element_blank(),
-    axis.text = element_text(size = 12),
-    axis.title.x = element_text(size = 14, face = "bold"),
-    strip.text = element_text(size = 14, face = "bold"),
-    legend.title = element_text(size = 14),
-    legend.text = element_text(size = 12),
-    legend.position = "bottom"
   )
-ggsave("results.png", path = "figures", width = 8, height = 8)
-  
 
 
-# Random Effects ----------------------------------------------------------
 
 
-# tech_effects <- bind_rows(
-#   tech_effects_MPR <- ranef(model_MPR)$Technician %>%
-#     rename(intercept_shift = `(Intercept)`) %>%
-#     tibble::rownames_to_column("technician") %>%
-#     mutate(metric = "MPR"),
-#   
-#   tech_effects_MS <- ranef(model_MS)$Technician %>%
-#     rename(intercept_shift = `(Intercept)`) %>%
-#     tibble::rownames_to_column("technician") %>%
-#     mutate(metric = "MS")
-# )
-# 
-# # Plot the intercept shifts
-# tech_effects %>%
-#   ggplot(aes(x = reorder(technician, intercept_shift), y = intercept_shift, fill = metric)) +
-#   geom_col(position = "dodge") +
-#   geom_hline(yintercept = 0, linetype = "dashed", color = "gray50") +
-#   scale_y_continuous(limits = c(-2, 2)) +
-#   coord_flip(expand = FALSE) +
-#   labs(
-#     title = "Random Intercepts by Technician",
-#     x = "Technician",
-#     y = "Intercept Shift (from overall mean)"
-#   ) +
-#   theme(
-#     plot.title = element_text(size = 16, hjust = 0.5, face = "bold"),
-#     axis.title.y = element_blank(),
-#     axis.text = element_text(size = 12),
-#     axis.title.x = element_text(size = 14, face = "bold"),
-#     strip.text = element_text(size = 14, face = "bold"),
-#     legend.title = element_text(size = 14),
-#     legend.text = element_text(size = 12),
-#     legend.position = "bottom"
-#   )
-# ggsave("tech_effects.png", path = "figures", width = 14, height = 7)
