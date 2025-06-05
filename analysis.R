@@ -21,13 +21,27 @@ get_pairwise_comparisons <- function(factor_name, model) {
 
 data <- read_csv("data/updated_metadata.csv", name_repair = "minimal") %>%
   mutate_at(c("Sample IDs", "Technician"), as.factor) %>%
-  filter(!is.na(Technician), `Sample Type` == "PPE Swab") %>%
+  filter(
+    !is.na(Technician), 
+    `Sample Type` == "PPE Swab",
+    Timing != "post decon" # Exclude post decon since it only occurs with dump site boots?
+  ) %>%
   select(c(
-    `Sample IDs`, Surface, `Surface Location`, Location, Timing, Technician, Side, MPR, MS, RAF, TtT
+    `Sample IDs`, 
+    Surface, 
+    `Surface Location`, 
+    Location, 
+    Timing, 
+    Technician, 
+    Side, 
+    MPR, 
+    MS, 
+    RAF, 
+    TtT
   )) %>%
   mutate_at(c("Surface", "Location", "Timing", "Technician"), as.factor) %>%
   mutate(
-    Surface = relevel(Surface, ref = "tyvek"),
+    Surface = relevel(Surface, "tyvek"),
     Location = relevel(Location, "negative site"),
     Timing = relevel(Timing, "pre sampling")
   )
@@ -99,8 +113,51 @@ write.csv(data, "data/analyzed.csv", row.names = FALSE)
 write.csv(results, "data/results.csv", row.names = FALSE)
 
 
+
+# Boot Analysis -----------------------------------------------------------
+
+
+
+boot_data <- read_csv("data/updated_metadata.csv", name_repair = "minimal") %>%
+  mutate_at(c("Sample IDs", "Technician"), as.factor) %>%
+  filter(Surface == "boot", !is.na(`Surface Location`)) %>%
+  select(c(
+    `Sample IDs`, 
+    Surface, 
+    `Surface Location`, 
+    Location, 
+    Timing, 
+    Technician, 
+    Side, 
+    MPR, 
+    MS, 
+    RAF, 
+    TtT
+  )) %>%
+  mutate_at(c("Surface", "Location", "Timing", "Technician"), as.factor) %>%
+  rename_with(~str_replace(., " ", "_")) %>%
+  mutate(
+    Location = relevel(Location, "negative site"),
+    Timing = relevel(Timing, "pre sampling")
   )
 
+model_MPR <- glm(MPR ~ Surface_Location + Location + Timing, data = boot_data)
+model_MS <- glm(MS ~ Surface_Location + Location + Timing, data = boot_data)
+
+factors <- c("Surface_Location", "Location", "Timing")
+boot_results <- bind_rows(
+  # MPR results
+  lapply(factors, get_pairwise_comparisons, model = model_MPR) %>%
+    bind_rows() %>%
+    mutate(metric = "MPR"),
+  # MS results
+  lapply(factors, get_pairwise_comparisons, model = model_MS) %>%
+    bind_rows() %>%
+    mutate(metric = "MS")
+)
+
+write.csv(boot_data, "data/boot_analyzed.csv", row.names = FALSE)
+write.csv(boot_results, "data/boot_results.csv", row.names = FALSE)
 
 
 
