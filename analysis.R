@@ -15,7 +15,12 @@ data <- read_csv("data/updated_metadata.csv", name_repair = "minimal") %>%
   select(c(
     `Sample IDs`, Surface, `Surface Location`, Location, Timing, Technician, Side, MPR, MS, RAF, TtT
   )) %>%
-  mutate_at(c("Surface", "Location", "Timing", "Technician"), as.factor)
+  mutate_at(c("Surface", "Location", "Timing", "Technician"), as.factor) %>%
+  mutate(
+    Surface = relevel(Surface, ref = "tyvek"),
+    Location = relevel(Location, "negative site"),
+    Timing = relevel(Timing, "pre sampling")
+  )
 
 data_sum <- data %>%
   group_by(`Sample IDs`, Surface, `Surface Location`, Location, Timing) %>%
@@ -34,11 +39,15 @@ data_sum <- data %>%
 
 
 # model_MPR <- lmer(# Model for MPR
-#   MPR ~ Surface + Location + Timing + (1 | `Surface Location`),
+#   MPR ~ Surface + Location + Timing + (1 | Technician),
 #   # MPR ~ Surface + Location + Timing + (1 | `Sample IDs`) + (1 | Technician) + (1 | Side),
 #   data = data
 # )
-model_MPR <- glm(MPR ~ Surface + Location + Timing, data = data)
+
+model_MPR <- glm(
+  MPR ~ Surface + Location + Timing,
+  data = data
+)
 # summary(model_MPR)
 
 # data.frame(
@@ -49,12 +58,17 @@ model_MPR <- glm(MPR ~ Surface + Location + Timing, data = data)
 #   geom_point() +
 #   geom_smooth(method="glm")
 
-model_MS <- glm(MS ~ Surface + Location + Timing, data = data)
+model_MS <- glm(
+  MS ~ Surface + Location + Timing,
+  data = data
+)
 # model_MS <- lmer(# Model for MS
-#   MS ~ Surface + Location + Timing + (1 | `Surface Location`),
-#   # MS ~ Surface + Location + Timing + (1 | `Sample IDs`) + (1 | Technician) + (1 | Side), 
+#   # MS ~ Surface + Location + Timing + (1 | `Surface Location`),
+#   MS ~ Surface + Location + Timing + (1 | Technician),
 #   data = data
 # )
+
+# contrast(emmeans(model_MPR, pairwise ~ Location), interaction = TRUE)
 
 # Function to get tidy pairwise comparisons for a given factor
 get_pairwise_comparisons <- function(factor_name, model) {
@@ -76,15 +90,15 @@ results <- bind_rows(
   lapply(factors, get_pairwise_comparisons, model = model_MS) %>%
     bind_rows() %>%
     mutate(metric = "MS")
-) %>%
-  arrange(p.value)
+)
+  # arrange(p.value)
 
 write.csv(data, "data/analyzed.csv", row.names = FALSE)
 write.csv(results, "data/results.csv", row.names = FALSE)
 
 
 results %>%
-  arrange(desc(p.value)) %>%
+  arrange(contrast) %>%
   mutate(p.value = signif(p.value, 4)) %>%
   ggplot(
     aes(
