@@ -215,7 +215,7 @@ ggsave(
 
 
 
-for (file in list.files("raw")) {
+for (file in list.files("raw", "spike_raw")) {
   
   file_name <- paste0(str_remove(file, ".xlsx"), "_plate_view.png")
   
