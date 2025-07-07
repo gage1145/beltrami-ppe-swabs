@@ -3,9 +3,10 @@ library(tidyverse)
 
 
 
-file <- list.files("spike_raw")[[1]]
+# file <- list.files("spike_raw", full.name=TRUE)[[1]]
+file <- "spike_raw/20250702_LW_BootRecovery2.xlsx"
 
-data <- get_real(file)[[0]] %>%
+data <- get_real(file)[[1]] %>%
   normalize_RFU()
 
 meta <- organize_tables(file) %>%
@@ -13,7 +14,7 @@ meta <- organize_tables(file) %>%
 
 metrics <- data.frame(
   `Sample IDs` = meta$`Sample IDs`,
-  Dilutions = -log10(as.numeric(meta$Dilutions)),
+  Dilutions = -log10(as.integer(meta$Dilutions)),
   check.names = FALSE
 ) %>%
   mutate(
@@ -21,16 +22,24 @@ metrics <- data.frame(
     MS  = calculate_MS(data),
     TtT = calculate_TtT(data, 2),
     RAF = 1/TtT,
-    # crossed = TtT != 48
   )
 
 metrics %>%
-  gather("key", "value", -c("Sample IDs", "Dilutions")) %>%
+  filter(
+    `Sample IDs` != "B",
+    # Dilutions == -3
+  ) %>%
+  # gather("key", "value", -c("Sample IDs", "Dilutions")) %>%
   mutate_at("Dilutions", as.factor) %>%
-  ggplot(aes(`Sample IDs`, value, fill=Dilutions)) +
+  ggplot(aes(`Sample IDs`, RAF, fill=Dilutions)) +
   geom_boxplot() +
-  facet_wrap(vars(key), scales="free")
-write.csv(metrics, "data/metrics.csv", row.names=FALSE)
+  scale_fill_manual(values=c("green", "orange", "cyan", "red", "blue")) +
+  # facet_wrap(vars(key), scales="free") +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)
+  )
+ggsave("figures/recovery_RAF.png", width=8, height=8)
+write.csv(metrics, "spike_data/metrics.csv", row.names=FALSE)
 
 
 
@@ -47,17 +56,65 @@ df_sum <- metrics %>%
     median_RAF = median(RAF),
     sd_RAF = sd(RAF)
   )
-write.csv(df_sum, "data/summary.csv", row.names = FALSE)
+write.csv(df_sum, "spike_data/summary.csv", row.names = FALSE)
+
+df_ <- metrics %>%
+  filter(
+    `Sample IDs` == "P",
+    Dilutions != -3 # This dilution throws off the standard curve.
+  )
 
 model <- glm(
-  RAF ~ Dilutions,
-  data = filter(metrics, `Sample IDs` == "P")
-) %>%
-  summary()
+  Dilutions ~ RAF,
+  data = df_
+) 
+  
+model_sum <- summary(model)
 
 r_square <- with(model, 1 - deviance / null.deviance)
 
-# predict.glm()
+unknowns <- metrics %>%
+  filter(!(`Sample IDs` %in% c("P", "N", "B")))
+
+sample_names <- unique(unknowns$`Sample IDs`)
+
+predict_unknowns <- function(sample_name, data) {
+  data <- filter(data, `Sample IDs` == sample_name) %>%
+    group_by(`Sample IDs`, Dilutions) %>%
+    summarize(
+      median_RAF = median(RAF),
+      sd_RAF = sd(RAF),
+      RAF = median(RAF),
+      Dilutions = mean(Dilutions)
+    )
+  split_name <- str_split(sample_name, "_")
+  sample_id <- split_name[[1]][1]
+  timing <- split_name[[1]][2]
+  # sample_id <- sample_name
+  data.frame(
+    `Sample IDs` = c(sample_id),
+    Timing = timing,
+    real_dilutions = c(data$Dilutions),
+    Dilutions = c(predict(model, data)),
+    mean_RAF = data$RAF,
+    median_RAF = c(data$median_RAF),
+    sd_RAF = c(data$sd_RAF),
+    check.names = FALSE
+  ) %>%
+    mutate(
+      loss = Dilutions - real_dilutions,
+      percent_recovery = 10^(loss) * 100,
+    )
+}
+
+predictions <- lapply(
+  sample_names, 
+  predict_unknowns, 
+  data=unknowns
+) %>%
+  bind_rows()
+
+write.csv(predictions, "spike_data/predictions.csv", row.names = FALSE)
 
 
 
@@ -66,28 +123,62 @@ r_square <- with(model, 1 - deviance / null.deviance)
 
 
 df_sum %>%
-  filter(`Sample IDs` != "N") %>%
+  filter(
+    `Sample IDs` == "P",
+    Dilutions != -3
+  ) %>%
   ggplot(aes(
-    Dilutions, median_RAF,
+    Dilutions, mean_RAF,
     ymin = median_RAF - sd_RAF, ymax = median_RAF + sd_RAF
   )) +
-  geom_point(size = 3) +
-  geom_errorbar(width = 0.05) +
   geom_smooth(
     method = glm,
-    se = FALSE,
+    se = TRUE,
     linetype = "dashed",
     colour = "black"
   ) +
-  geom_text(label = expression(R^2 == 0.8026), x = -6.5, y = 0.1) +
-  ggtitle("Positive Titration Curve") +
+  geom_point(size = 3) +
+  geom_errorbar(width = 0.05) +
+  geom_point(
+    aes(
+      x = Dilutions, 
+      y = mean_RAF,
+      color = `Sample IDs`
+    ), 
+    predictions %>% filter(is.na(Timing) & real_dilutions == -3),
+    size = 3
+  ) +
+  geom_errorbar(
+    aes(
+      ymin = median_RAF - sd_RAF, ymax = median_RAF + sd_RAF,
+      color = `Sample IDs`
+    ),
+    predictions %>% filter(is.na(Timing) & real_dilutions == -3),
+    width = 0.05
+  ) +
+  geom_point(
+    aes(
+      x = real_dilutions,
+      y = mean_RAF,
+      color = `Sample IDs`,
+    ),
+    predictions %>% filter(is.na(Timing) & real_dilutions == -3),
+    shape = "triangle",
+    size = 3
+  ) +
+  geom_hline(
+    aes(
+      yintercept=mean_RAF, color = `Sample IDs`
+    ), 
+    data = predictions %>% filter(is.na(Timing) & real_dilutions == -3),
+    linetype = "dashed"
+  ) +
+  geom_text(label = expression(R^2 == 0.5834), x = -6.5, y = 0.15) +
+  ggtitle("Positive Standard Curve") +
   xlab("Log Dilution Factor") +
   ylab("Rate of Amyloid Formation (1/s)") +
-  # scale_y_continuous(breaks = seq(0, 3e-5, 5e-6)) +
-  # coord_cartesian(xlim = c(-7.2, -2.8), ylim = c(0, 3.3e-5), expand = FALSE) +
   theme_classic() +
   theme(
-    legend.position = "none",
     axis.line = element_line(colour = "black"),
     axis.text = element_text(size = 12),
     axis.title = element_text(size = 14),
