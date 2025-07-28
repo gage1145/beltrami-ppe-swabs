@@ -3,6 +3,7 @@ library(ggplot2)
 # library(quicR)
 library(ggridges)
 library(readr)
+library(forcats)
 
 
 
@@ -47,6 +48,7 @@ ggsave("results.png", path = "figures", width = 8, height = 8)
 # Boot Results
 boot_results <- read.csv("data/boot_results.csv", check.names = FALSE)
 boot_results %>%
+  filter(term != "Surface_Location") %>%
   arrange(contrast) %>%
   mutate(p.value = signif(p.value, 4)) %>%
   ggplot(
@@ -55,7 +57,7 @@ boot_results %>%
       estimate, 
       ymin = estimate - std.error, 
       ymax = estimate + std.error,
-      color = p.value < 0.05
+      color = p.value
     )
   ) +
   geom_pointrange(
@@ -64,7 +66,7 @@ boot_results %>%
   geom_hline(yintercept = 0, linewidth = 1.2, linetype = "dashed") +
   geom_label(aes(label = p.value), nudge_x = 0.3, size = 3) +
   facet_grid(term ~ metric, scale = "free", space = "free_y") +
-  scale_colour_manual(values = c("navy", "darkred")) +
+  scale_colour_gradient(high="navy", low="darkred") +
   # scale_y_continuous(limits = c(-1, 1)) +
   coord_flip() +
   theme(
@@ -76,7 +78,7 @@ boot_results %>%
     legend.text = element_text(size = 12),
     legend.position = "bottom"
   )
-ggsave("boot_results.png", path = "figures", width = 8, height = 8)
+ggsave("boot_results.png", path = "figures", width = 6, height = 8)
 
 
 
@@ -125,6 +127,7 @@ density_theme <- theme(
 
 
 data %>%
+  filter(Surface %in% c("blank", "boot")) %>%
   ggplot(aes(Timing, RAF, color = Location)) +
   geom_boxplot(fill = NA, size = 1) +
   facet_grid(cols = vars(Surface)) +
@@ -132,7 +135,7 @@ data %>%
   scale_y_continuous(limits = c(0.013, 0.04)) +
   ggtitle("Surface RAFs by Location") +
   box_theme
-ggsave("TLS_raf.png", path = "figures", width = 14, height = 8)
+ggsave("TLS_raf.png", path = "figures", width = 6, height = 8)
 
 data %>%
   ggplot(aes(Timing, RAF, color = Surface)) +
@@ -155,6 +158,8 @@ data %>%
 ggsave("STL_raf.png", path = "figures", width = 14, height = 8)
 
 data %>%
+  filter(Surface %in% c("blank", "boot")) %>%
+  filter(Timing != "post decon") %>%
   ggplot(aes(Location, RAF, color = Timing)) +
   geom_boxplot(fill = NA, size = 1) +
   facet_grid(cols = vars(Surface)) +
@@ -162,7 +167,7 @@ data %>%
   ggtitle("Surface RAFs by Location") +
   scale_y_continuous(limits=c(0.013,0.04)) +
   box_theme
-ggsave("LTS_raf.png", path = "figures", width = 14, height = 8)
+ggsave("LTS_raf.png", path = "figures", width = 6, height = 8)
 
 
 
