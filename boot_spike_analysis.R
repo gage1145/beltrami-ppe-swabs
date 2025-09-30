@@ -152,7 +152,7 @@ df_sum %>%
     data = predictions %>% filter(is.na(Timing) & real_dilutions == -3),
     linetype = "dashed"
   ) +
-  geom_text(label = expression(R^2 == 0.5834), x = -6.5, y = 0.15) +
+  # geom_text(label = expression(R^2 == 0.5834), x = -6.5, y = 0.15) +
   ggtitle("Positive Standard Curve") +
   xlab("Log Dilution Factor") +
   ylab("Rate of Amyloid Formation (1/s)") +
