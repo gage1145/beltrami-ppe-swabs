@@ -1,9 +1,10 @@
 library(dplyr)
 library(ggplot2)
-# library(quicR)
+library(quicR)
 library(ggridges)
 library(readr)
 library(forcats)
+library(stringr)
 
 
 
@@ -181,6 +182,7 @@ ggsave("LTS_raf.png", path = "figures", width = 6, height = 8)
 data %>%
   arrange(Location) %>%
   filter(Timing != "post-decon") %>%
+  filter(Surface == "boot") %>%
   select(MPR, Location, Timing) %>%
   gather("key", "value", -c(Location, Timing)) %>%
   ggplot(aes(value, Location, fill = Timing)) +
@@ -188,7 +190,8 @@ data %>%
   facet_wrap(vars(key), nrow=2, scales = "free", strip.position = "right") +
   scale_fill_manual(values = c("darkcyan", "darkred", "darkorange")) +
   scale_y_discrete(expand = expansion(mult = c(0.025,0.5))) +
-  ggtitle("Density Plots of Surface MPRs by Sample Timing") +
+  scale_x_continuous(limits=c(0,10)) +
+  ggtitle("Density Plots of Boot MPRs by Sample Timing") +
   density_theme
 ggsave("location_timing_density.png", path = "figures", width = 14, height = 8)
 
@@ -197,13 +200,14 @@ ggsave("location_timing_density.png", path = "figures", width = 14, height = 8)
 data %>%
   filter(Timing != "post decon") %>%
   arrange(Surface) %>%
-  select(MPR, MS, Surface, Location, Timing) %>%
+  select(MPR, Surface, Location, Timing) %>%
   gather("key", "value", -c(Surface, Location, Timing)) %>%
-  ggplot(aes(value, fct_rev(Surface), fill = Location, linetype = Timing)) +
+  ggplot(aes(value, Location, fill = Surface)) +
   geom_density_ridges(alpha = 0.5, linewidth = 0.75, scale = 1.2) +
   facet_wrap(vars(key), nrow=2, scales = "free", strip.position = "right") +
-  scale_fill_manual(values = c("darkcyan", "darkred", "darkorange")) +
+  scale_fill_manual(values = c("darkcyan", "darkred", "darkorange", "cyan")) +
   scale_y_discrete(expand = expansion(mult = c(0.025,0.35))) +
+  scale_x_continuous(limits=c(0,10)) +
   # scale_x_continuous(limits = c(0, 10)) +
   ggtitle("Density Plots of Surface MPRs by Location & Timing") +
   density_theme
