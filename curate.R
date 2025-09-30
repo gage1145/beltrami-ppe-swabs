@@ -80,7 +80,7 @@ metadata <- read_csv("data/metadata.csv", name_repair="minimal") %>%
   ) %>%
   relocate(c(`Sample IDs`, Technician), .before=1) %>%
   bind_rows(new_metadata) %>%
-  left_join(analyzed, by="Sample IDs") %>%
+  left_join(analyzed, by="Sample IDs", relationship="many-to-many") %>%
   mutate_all(trimws)
 
 write.csv(metadata, "data/updated_metadata.csv", row.names = FALSE)
