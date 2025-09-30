@@ -1,0 +1,181 @@
+﻿Name,Collection ID (1),Sample IDs,Location,Timing,Surface,Side,Technician,Process ID,Process Date,Processed by,Processing method
+,Pre-sampling swabs,1,negative site,pre,Boot,left,GR,N/A,,LW,PPE Swab
+,Pre-sampling swabs,2,negative site,pre,Boot,left,GR,,,LW,PPE Swab
+,Pre-sampling swabs,3,negative site,pre,Boot,left,GR,,,LW,PPE Swab
+,Pre-sampling swabs,4,negative site,pre,Boot,right,GR,,,LW,PPE Swab
+,Pre-sampling swabs,5,negative site,pre,Boot,right,GR,,,LW,PPE Swab
+,Pre-sampling swabs,6,negative site,pre,Boot,right,GR,,,LW,PPE Swab
+,Pre-sampling swabs,7,negative site,pre,Boot,left,LW,,,LW,PPE Swab
+,Pre-sampling swabs,8,negative site,pre,Boot,left,LW,,,LW,PPE Swab
+,Pre-sampling swabs,9,negative site,pre,Boot,left,LW,,,LW,PPE Swab
+,Pre-sampling swabs,10,negative site,pre,Boot,right,LW,,,LW,PPE Swab
+,Pre-sampling swabs,11,negative site,pre,Boot,right,LW,,,LW,PPE Swab
+,Pre-sampling swabs,12,negative site,pre,Boot,right,LW,,,LW,PPE Swab
+,Pre-sampling swabs,13,negative site,pre,Boot,left,MS,,,LW,PPE Swab
+,Pre-sampling swabs,14,negative site,pre,Boot,left,MS,,,LW,PPE Swab
+,Pre-sampling swabs,15,negative site,pre,Boot,left,MS,,,LW,PPE Swab
+,Pre-sampling swabs,16,negative site,pre,Boot,right,MS,,,LW,PPE Swab
+,Pre-sampling swabs,17,negative site,pre,Boot,right,MS,,,LW,PPE Swab
+,Pre-sampling swabs,18,negative site,pre,Boot,right,MS,,,LW,PPE Swab
+,Pre-sampling swabs,19,negative site,pre,Boot,left,PL,,,LW,PPE Swab
+,Pre-sampling swabs,20,negative site,pre,Boot,left,PL,,,LW,PPE Swab
+,Pre-sampling swabs,21,negative site,pre,Boot,left,PL,,,LW,PPE Swab
+,Pre-sampling swabs,22,negative site,pre,Boot,right,PL,,,LW,PPE Swab
+,Pre-sampling swabs,23,negative site,pre,Boot,right,PL,,,LW,PPE Swab
+,Pre-sampling swabs,24,negative site,pre,Boot,right,PL,,,LW,PPE Swab
+,Pre-sampling swabs,25,negative site,pre,Boot,left,FV,,,LW,PPE Swab
+,Pre-sampling swabs,26,negative site,pre,Boot,left,FV,,,LW,PPE Swab
+,Pre-sampling swabs,27,negative site,pre,Boot,left,FV,,,LW,PPE Swab
+,Pre-sampling swabs,28,negative site,pre,Boot,right,FV,,,LW,PPE Swab
+,Pre-sampling swabs,29,negative site,pre,Boot,right,FV,,,LW,PPE Swab
+,Post-sampling swabs,30,negative site,post,Boot,right,FV,,,LW,PPE Swab
+,Post-sampling swabs,31,negative site,post,Boot,left,GR,,,LW,PPE Swab
+,Post-sampling swabs,32,negative site,post,Boot,left,GR,,,LW,PPE Swab
+,Post-sampling swabs,33,negative site,post,Boot,left,GR,,,LW,PPE Swab
+,Post-sampling swabs,34,negative site,post,Boot,right,GR,,,LW,PPE Swab
+,Post-sampling swabs,35,negative site,post,Boot,right,GR,,,LW,PPE Swab
+,Post-sampling swabs,36,negative site,post,Boot,right,GR,,,LW,PPE Swab
+,Post-sampling swabs,37,negative site,post,Boot,left,LW,,,LW,PPE Swab
+,Post-sampling swabs,38,negative site,post,Boot,left,LW,,,LW,PPE Swab
+,Post-sampling swabs,39,negative site,post,Boot,left,LW,,,LW,PPE Swab
+,Post-sampling swabs,40,negative site,post,Boot,right,LW,,,LW,PPE Swab
+,Post-sampling swabs,41,negative site,post,Boot,right,LW,,,LW,PPE Swab
+,Post-sampling swabs,42,negative site,post,Boot,right,LW,,,LW,PPE Swab
+,Post-sampling swabs,43,negative site,post,Boot,left,MS,,,LW,PPE Swab
+,Post-sampling swabs,44,negative site,post,Boot,left,MS,,,LW,PPE Swab
+,Post-sampling swabs,45,negative site,post,Boot,left,MS,,,LW,PPE Swab
+,Post-sampling swabs,46,negative site,post,Boot,right,MS,,,LW,PPE Swab
+,Post-sampling swabs,47,negative site,post,Boot,right,MS,,,LW,PPE Swab
+,Post-sampling swabs,48,negative site,post,Boot,right,MS,,,LW,PPE Swab
+,Post-sampling swabs,49,negative site,post,Boot,left,PL,,,LW,PPE Swab
+,Post-sampling swabs,50,negative site,post,Boot,left,PL,,,LW,PPE Swab
+,Post-sampling swabs,51,negative site,post,Boot,left,PL,,,LW,PPE Swab
+,Post-sampling swabs,52,negative site,post,Boot,right,PL,,,LW,PPE Swab
+,Post-sampling swabs,53,negative site,post,Boot,right,PL,,,LW,PPE Swab
+,Post-sampling swabs,54,negative site,post,Boot,right,PL,,,LW,PPE Swab
+,Post-sampling swabs,55,negative site,post,Boot,left,FV,,,LW,PPE Swab
+,Post-sampling swabs,56,negative site,post,Boot,left,FV,,,LW,PPE Swab
+,Post-sampling swabs,57,negative site,post,Boot,left,FV,,,LW,PPE Swab
+,Post-sampling swabs,58,negative site,post,Boot,right,FV,,,LW,PPE Swab
+,Post-sampling swabs,59,negative site,post,Boot,right,FV,,,LW,PPE Swab
+,Post-Decon Swabs,60,negative site,post decon,Boot,right,FV,,,LW,PPE Swab
+,Post-Decon Swabs,61,negative site,post decon,Boot,left,GR,,,LW,PPE Swab
+,Post-Decon Swabs,62,negative site,post decon,Boot,left,GR,,,LW,PPE Swab
+,Post-Decon Swabs,63,negative site,post decon,Boot,left,GR,,,LW,PPE Swab
+,Post-Decon Swabs,64,negative site,post decon,Boot,right,GR,,,LW,PPE Swab
+,Post-Decon Swabs,65,negative site,post decon,Boot,right,GR,,,LW,PPE Swab
+,Post-Decon Swabs,66,negative site,post decon,Boot,right,GR,,,LW,PPE Swab
+,Post-Decon Swabs,67,negative site,post decon,Boot,left,LW,,,LW,PPE Swab
+,Post-Decon Swabs,68,negative site,post decon,Boot,left,LW,,,LW,PPE Swab
+,Post-Decon Swabs,69,negative site,post decon,Boot,left,LW,,,LW,PPE Swab
+,Post-Decon Swabs,70,negative site,post decon,Boot,right,LW,,,LW,PPE Swab
+,Post-Decon Swabs,71,negative site,post decon,Boot,right,LW,,,LW,PPE Swab
+,Post-Decon Swabs,72,negative site,post decon,Boot,right,LW,,,LW,PPE Swab
+,Post-Decon Swabs,73,negative site,post decon,Boot,left,MS,,,LW,PPE Swab
+,Post-Decon Swabs,74,negative site,post decon,Boot,left,MS,,,LW,PPE Swab
+,Post-Decon Swabs,75,negative site,post decon,Boot,left,MS,,,LW,PPE Swab
+,Post-Decon Swabs,76,negative site,post decon,Boot,right,MS,,,LW,PPE Swab
+,Post-Decon Swabs,77,negative site,post decon,Boot,right,MS,,,LW,PPE Swab
+,Post-Decon Swabs,78,negative site,post decon,Boot,right,MS,,,LW,PPE Swab
+,Post-Decon Swabs,79,negative site,post decon,Boot,left,PL,,,LW,PPE Swab
+,Post-Decon Swabs,80,negative site,post decon,Boot,left,PL,,,LW,PPE Swab
+,Post-Decon Swabs,81,negative site,post decon,Boot,left,PL,,,LW,PPE Swab
+,Post-Decon Swabs,82,negative site,post decon,Boot,right,PL,,,LW,PPE Swab
+,Post-Decon Swabs,83,negative site,post decon,Boot,right,PL,,,LW,PPE Swab
+,Post-Decon Swabs,84,negative site,post decon,Boot,right,PL,,,LW,PPE Swab
+,Post-Decon Swabs,85,negative site,post decon,Boot,left,FV,,,LW,PPE Swab
+,Post-Decon Swabs,86,negative site,post decon,Boot,left,FV,,,LW,PPE Swab
+,Post-Decon Swabs,87,negative site,post decon,Boot,left,FV,,,LW,PPE Swab
+,Post-Decon Swabs,88,negative site,post decon,Boot,right,FV,,,LW,PPE Swab
+,Post-Decon Swabs,89,negative site,post decon,Boot,right,FV,,,LW,PPE Swab
+,Post-Decon Swabs,90,negative site,post decon,Boot,right,FV,,,LW,PPE Swab
+,Pre-sampling swabs,91,dump site,pre,Boot,left,GR,,,LW,PPE Swab
+,Pre-sampling swabs,92,dump site,pre,Boot,left,GR,,,LW,PPE Swab
+,Pre-sampling swabs,93,dump site,pre,Boot,left,GR,,,LW,PPE Swab
+,Pre-sampling swabs,94,dump site,pre,Boot,right,GR,,,LW,PPE Swab
+,Pre-sampling swabs,95,dump site,pre,Boot,right,GR,,,LW,PPE Swab
+,Pre-sampling swabs,96,dump site,pre,Boot,right,GR,,,LW,PPE Swab
+,Pre-sampling swabs,97,dump site,pre,Boot,left,LW,,,LW,PPE Swab
+,Pre-sampling swabs,98,dump site,pre,Boot,left,LW,,,LW,PPE Swab
+,Pre-sampling swabs,99,dump site,pre,Boot,left,LW,,,LW,PPE Swab
+,Pre-sampling swabs,100,dump site,pre,Boot,right,LW,,,LW,PPE Swab
+,Pre-sampling swabs,101,dump site,pre,Boot,right,LW,,,LW,PPE Swab
+,Pre-sampling swabs,102,dump site,pre,Boot,right,LW,,,LW,PPE Swab
+,Pre-sampling swabs,103,dump site,pre,Boot,left,MS,,,LW,PPE Swab
+,Pre-sampling swabs,104,dump site,pre,Boot,left,MS,,,LW,PPE Swab
+,Pre-sampling swabs,105,dump site,pre,Boot,left,MS,,,LW,PPE Swab
+,Pre-sampling swabs,106,dump site,pre,Boot,right,MS,,,LW,PPE Swab
+,Pre-sampling swabs,107,dump site,pre,Boot,right,MS,,,LW,PPE Swab
+,Pre-sampling swabs,108,dump site,pre,Boot,right,MS,,,LW,PPE Swab
+,Pre-sampling swabs,109,dump site,pre,Boot,left,PL,,,LW,PPE Swab
+,Pre-sampling swabs,110,dump site,pre,Boot,left,PL,,,LW,PPE Swab
+,Pre-sampling swabs,111,dump site,pre,Boot,left,PL,,,LW,PPE Swab
+,Pre-sampling swabs,112,dump site,pre,Boot,right,PL,,,LW,PPE Swab
+,Pre-sampling swabs,113,dump site,pre,Boot,right,PL,,,LW,PPE Swab
+,Pre-sampling swabs,114,dump site,pre,Boot,right,PL,,,LW,PPE Swab
+,Pre-sampling swabs,115,dump site,pre,Boot,left,FV,,,LW,PPE Swab
+,Pre-sampling swabs,116,dump site,pre,Boot,left,FV,,,LW,PPE Swab
+,Pre-sampling swabs,117,dump site,pre,Boot,left,FV,,,LW,PPE Swab
+,Pre-sampling swabs,118,dump site,pre,Boot,right,FV,,,LW,PPE Swab
+,Pre-sampling swabs,119,dump site,pre,Boot,right,FV,,,LW,PPE Swab
+,Post-sampling swabs,120,dump site,pre,Boot,right,FV,,,LW,PPE Swab
+,Post-sampling swabs,121,dump site,post,Boot,left,GR,,,LW,PPE Swab
+,Post-sampling swabs,122,dump site,post,Boot,left,GR,,,LW,PPE Swab
+,Post-sampling swabs,123,dump site,post,Boot,left,GR,,,LW,PPE Swab
+,Post-sampling swabs,124,dump site,post,Boot,right,GR,,,LW,PPE Swab
+,Post-sampling swabs,125,dump site,post,Boot,right,GR,,,LW,PPE Swab
+,Post-sampling swabs,126,dump site,post,Boot,right,GR,,,LW,PPE Swab
+,Post-sampling swabs,127,dump site,post,Boot,left,LW,,,LW,PPE Swab
+,Post-sampling swabs,128,dump site,post,Boot,left,LW,,,LW,PPE Swab
+,Post-sampling swabs,129,dump site,post,Boot,left,LW,,,LW,PPE Swab
+,Post-sampling swabs,130,dump site,post,Boot,right,LW,,,LW,PPE Swab
+,Post-sampling swabs,131,dump site,post,Boot,right,LW,,,LW,PPE Swab
+,Post-sampling swabs,132,dump site,post,Boot,right,LW,,,LW,PPE Swab
+,Post-sampling swabs,133,dump site,post,Boot,left,MS,,,LW,PPE Swab
+,Post-sampling swabs,134,dump site,post,Boot,left,MS,,,LW,PPE Swab
+,Post-sampling swabs,135,dump site,post,Boot,left,MS,,,LW,PPE Swab
+,Post-sampling swabs,136,dump site,post,Boot,right,MS,,,LW,PPE Swab
+,Post-sampling swabs,137,dump site,post,Boot,right,MS,,,LW,PPE Swab
+,Post-sampling swabs,138,dump site,post,Boot,right,MS,,,LW,PPE Swab
+,Post-sampling swabs,139,dump site,post,Boot,left,PL,,,LW,PPE Swab
+,Post-sampling swabs,140,dump site,post,Boot,left,PL,,,LW,PPE Swab
+,Post-sampling swabs,141,dump site,post,Boot,left,PL,,,LW,PPE Swab
+,Post-sampling swabs,142,dump site,post,Boot,right,PL,,,LW,PPE Swab
+,Post-sampling swabs,143,dump site,post,Boot,right,PL,,,LW,PPE Swab
+,Post-sampling swabs,144,dump site,post,Boot,right,PL,,,LW,PPE Swab
+,Post-sampling swabs,145,dump site,post,Boot,left,FV,,,LW,PPE Swab
+,Post-sampling swabs,146,dump site,post,Boot,left,FV,,,LW,PPE Swab
+,Post-sampling swabs,147,dump site,post,Boot,left,FV,,,LW,PPE Swab
+,Post-sampling swabs,148,dump site,post,Boot,right,FV,,,LW,PPE Swab
+,Post-sampling swabs,149,dump site,post,Boot,right,FV,,,LW,PPE Swab
+,Post-Decon Swabs,150,dump site,post,Boot,right,FV,,,LW,PPE Swab
+,Post-Decon Swabs,151,dump site,post decon,Boot,left,GR,,,LW,PPE Swab
+,Post-Decon Swabs,152,dump site,post decon,Boot,left,GR,,,LW,PPE Swab
+,Post-Decon Swabs,153,dump site,post decon,Boot,left,GR,,,LW,PPE Swab
+,Post-Decon Swabs,154,dump site,post decon,Boot,right,GR,,,LW,PPE Swab
+,Post-Decon Swabs,155,dump site,post decon,Boot,right,GR,,,LW,PPE Swab
+,Post-Decon Swabs,156,dump site,post decon,Boot,right,GR,,,LW,PPE Swab
+,Post-Decon Swabs,157,dump site,post decon,Boot,left,LW,,,LW,PPE Swab
+,Post-Decon Swabs,158,dump site,post decon,Boot,left,LW,,,LW,PPE Swab
+,Post-Decon Swabs,159,dump site,post decon,Boot,left,LW,,,LW,PPE Swab
+,Post-Decon Swabs,160,dump site,post decon,Boot,right,LW,,,LW,PPE Swab
+,Post-Decon Swabs,161,dump site,post decon,Boot,right,LW,,,LW,PPE Swab
+,Post-Decon Swabs,162,dump site,post decon,Boot,right,LW,,,LW,PPE Swab
+,Post-Decon Swabs,163,dump site,post decon,Boot,left,MS,,,LW,PPE Swab
+,Post-Decon Swabs,164,dump site,post decon,Boot,left,MS,,,LW,PPE Swab
+,Post-Decon Swabs,165,dump site,post decon,Boot,left,MS,,,LW,PPE Swab
+,Post-Decon Swabs,166,dump site,post decon,Boot,right,MS,,,LW,PPE Swab
+,Post-Decon Swabs,167,dump site,post decon,Boot,right,MS,,,LW,PPE Swab
+,Post-Decon Swabs,168,dump site,post decon,Boot,right,MS,,,LW,PPE Swab
+,Post-Decon Swabs,169,dump site,post decon,Boot,left,PL,,,LW,PPE Swab
+,Post-Decon Swabs,170,dump site,post decon,Boot,left,PL,,,LW,PPE Swab
+,Post-Decon Swabs,171,dump site,post decon,Boot,left,PL,,,LW,PPE Swab
+,Post-Decon Swabs,172,dump site,post decon,Boot,right,PL,,,LW,PPE Swab
+,Post-Decon Swabs,173,dump site,post decon,Boot,right,PL,,,LW,PPE Swab
+,Post-Decon Swabs,174,dump site,post decon,Boot,right,PL,,,LW,PPE Swab
+,Post-Decon Swabs,175,dump site,post decon,Boot,left,FV,,,LW,PPE Swab
+,Post-Decon Swabs,176,dump site,post decon,Boot,left,FV,,,LW,PPE Swab
+,Post-Decon Swabs,177,dump site,post decon,Boot,left,FV,,,LW,PPE Swab
+,Post-Decon Swabs,178,dump site,post decon,Boot,right,FV,,,LW,PPE Swab
+,Post-Decon Swabs,179,dump site,post decon,Boot,right,FV,,,LW,PPE Swab
+,Post-Decon Swabs,180,dump site,post decon,Boot,right,FV,,,LW,PPE Swab

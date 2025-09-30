@@ -1,34 +1,214 @@
-Field ID,Location,Timing,Surface,Surface Location,Side,Technician,Sample IDs,Process Date,Sample Type,Process ID
-1 JB LTV,perimeter,pre sampling,tyvek,leg,left,JB,961,5/7/2025,PPE Swab,S-961
-2 JB RTV,perimeter,pre sampling,tyvek,leg,right,JB,962,5/7/2025,PPE Swab,S-962
-3 JB LFB,perimeter,pre sampling,boot,,left,JB,963,5/7/2025,PPE Swab,S-963
-4 JB RFB,perimeter,pre sampling,boot,,right,JB,964,5/7/2025,PPE Swab,S-964
-5 TW LTV,perimeter,pre sampling,tyvek,leg,left,TW,965,5/7/2025,PPE Swab,S-965
-6 TW RTV,perimeter,pre sampling,tyvek,leg,right,TW,966,5/7/2025,PPE Swab,S-966
-7 TW LFB,perimeter,pre sampling,boot,,left,TW,967,5/7/2025,PPE Swab,S-967
-8 TW RFB,perimeter,pre sampling,boot,,right,TW,968,5/7/2025,PPE Swab,S-968
-9 DK LFW,perimeter,pre sampling,boot,,left,DK,969,5/7/2025,PPE Swab,S-969
-10 DK RFW,perimeter,pre sampling,boot,,right,DK,970,5/7/2025,PPE Swab,S-970
-11 BF1 Top,dump site,post sampling,bird feeder steel plate,,top,JB,971,5/7/2025,Bird Feeder Swab,S-971
-12 BF 1 Bottom,dump site,post sampling,bird feeder steel plate,,bottom,JB,972,5/7/2025,Bird Feeder Swab,S-972
-13 BF 2 Top,dump site,post sampling,bird feeder steel plate,,top,JB,973,5/7/2025,Bird Feeder Swab,S-973
-14 BF 2 bottom,dump site,post sampling,bird feeder steel plate,,bottom,JB,974,5/7/2025,Bird Feeder Swab,S-974
-15 BF3 Top,dump site,post sampling,bird feeder steel plate,,top,JB,975,5/7/2025,Bird Feeder Swab,S-975
-16 BF3 Bottom,dump site,post sampling,bird feeder steel plate,,bottom,JB,976,5/7/2025,Bird Feeder Swab,S-976
-17 BF4 Top,dump site,post sampling,bird feeder steel plate,,top,JB,977,5/7/2025,Bird Feeder Swab,S-977
-18 BF 4 Bottom,dump site,post sampling,bird feeder steel plate,,bottom,JB,978,5/7/2025,Bird Feeder Swab,S-978
-19 BF5 Top,dump site,post sampling,bird feeder steel plate,,top,JB,979,5/7/2025,Bird Feeder Swab,S-979
-20 BF5 Bottom,dump site,post sampling,bird feeder steel plate,,bottom,JB,980,5/7/2025,Bird Feeder Swab,S-980
-21 BF 6 Top,dump site,post sampling,bird feeder steel plate,,top,JB,981,5/7/2025,Bird Feeder Swab,S-981
-22 BF6 Bottom,dump site,post sampling,bird feeder steel plate,,bottom,JB,982,5/7/2025,Bird Feeder Swab,S-982
-23 Blank after BF1,dump site,post sampling,blank,,,JB,983,5/7/2025,PPE Swab,S-983
-24 Blank after BF3,dump site,post sampling,blank,,,JB,984,5/7/2025,PPE Swab,S-984
-25 Blank after BF5,dump site,post sampling,blank,,,JB,985,5/7/2025,PPE Swab,S-985
-26 JB LTV,dump site,post sampling,tyvek,,left,JB,986,5/7/2025,PPE Swab,S-986
-27 JB RTV,dump site,post sampling,tyvek,,right,JB,987,5/7/2025,PPE Swab,S-987
-28 JB LFB,dump site,post sampling,boot,,left,JB,988,5/7/2025,PPE Swab,S-988
-29 JB RFB,dump site,post sampling,boot,,right,JB,989,5/7/2025,PPE Swab,S-989
-30 TW LTV,dump site,post sampling,tyvek,leg,left,TW,990,5/7/2025,PPE Swab,S-990
-31 TW RTV,dump site,post sampling,tyvek,leg,right,TW,991,5/7/2025,PPE Swab,S-991
-32 TW LFB,dump site,post sampling,boot,,left,TW,992,5/7/2025,PPE Swab,S-992
-33 TW RFB,dump site,post sampling,boot,,right,TW,993,5/7/2025,PPE Swab,S-993
+Field ID,Location,Timing,Surface,Surface Location,Side,Technician,Sample IDs,Process Date,Sample Type,Process ID,rxn_tech
+1 JB LTV,perimeter,pre sampling,tyvek,leg,left,JB,961,5/7/2025,PPE Swab,S-961,GR
+2 JB RTV,perimeter,pre sampling,tyvek,leg,right,JB,962,5/7/2025,PPE Swab,S-962,GR
+3 JB LFB,perimeter,pre sampling,boot,,left,JB,963,5/7/2025,PPE Swab,S-963,GR
+4 JB RFB,perimeter,pre sampling,boot,,right,JB,964,5/7/2025,PPE Swab,S-964,GR
+5 TW LTV,perimeter,pre sampling,tyvek,leg,left,TW,965,5/7/2025,PPE Swab,S-965,GR
+6 TW RTV,perimeter,pre sampling,tyvek,leg,right,TW,966,5/7/2025,PPE Swab,S-966,GR
+7 TW LFB,perimeter,pre sampling,boot,,left,TW,967,5/7/2025,PPE Swab,S-967,GR
+8 TW RFB,perimeter,pre sampling,boot,,right,TW,968,5/7/2025,PPE Swab,S-968,GR
+9 DK LFW,perimeter,pre sampling,boot,,left,DK,969,5/7/2025,PPE Swab,S-969,GR
+10 DK RFW,perimeter,pre sampling,boot,,right,DK,970,5/7/2025,PPE Swab,S-970,GR
+11 BF1 Top,dump site,post sampling,bird feeder steel plate,,top,JB,971,5/7/2025,Bird Feeder Swab,S-971,GR
+12 BF 1 Bottom,dump site,post sampling,bird feeder steel plate,,bottom,JB,972,5/7/2025,Bird Feeder Swab,S-972,GR
+13 BF 2 Top,dump site,post sampling,bird feeder steel plate,,top,JB,973,5/7/2025,Bird Feeder Swab,S-973,GR
+14 BF 2 bottom,dump site,post sampling,bird feeder steel plate,,bottom,JB,974,5/7/2025,Bird Feeder Swab,S-974,GR
+15 BF3 Top,dump site,post sampling,bird feeder steel plate,,top,JB,975,5/7/2025,Bird Feeder Swab,S-975,GR
+16 BF3 Bottom,dump site,post sampling,bird feeder steel plate,,bottom,JB,976,5/7/2025,Bird Feeder Swab,S-976,GR
+17 BF4 Top,dump site,post sampling,bird feeder steel plate,,top,JB,977,5/7/2025,Bird Feeder Swab,S-977,GR
+18 BF 4 Bottom,dump site,post sampling,bird feeder steel plate,,bottom,JB,978,5/7/2025,Bird Feeder Swab,S-978,GR
+19 BF5 Top,dump site,post sampling,bird feeder steel plate,,top,JB,979,5/7/2025,Bird Feeder Swab,S-979,GR
+20 BF5 Bottom,dump site,post sampling,bird feeder steel plate,,bottom,JB,980,5/7/2025,Bird Feeder Swab,S-980,GR
+21 BF 6 Top,dump site,post sampling,bird feeder steel plate,,top,JB,981,5/7/2025,Bird Feeder Swab,S-981,GR
+22 BF6 Bottom,dump site,post sampling,bird feeder steel plate,,bottom,JB,982,5/7/2025,Bird Feeder Swab,S-982,GR
+23 Blank after BF1,dump site,post sampling,blank,,,JB,983,5/7/2025,PPE Swab,S-983,GR
+24 Blank after BF3,dump site,post sampling,blank,,,JB,984,5/7/2025,PPE Swab,S-984,GR
+25 Blank after BF5,dump site,post sampling,blank,,,JB,985,5/7/2025,PPE Swab,S-985,GR
+26 JB LTV,dump site,post sampling,tyvek,,left,JB,986,5/7/2025,PPE Swab,S-986,GR
+27 JB RTV,dump site,post sampling,tyvek,,right,JB,987,5/7/2025,PPE Swab,S-987,GR
+28 JB LFB,dump site,post sampling,boot,,left,JB,988,5/7/2025,PPE Swab,S-988,GR
+29 JB RFB,dump site,post sampling,boot,,right,JB,989,5/7/2025,PPE Swab,S-989,GR
+30 TW LTV,dump site,post sampling,tyvek,leg,left,TW,990,5/7/2025,PPE Swab,S-990,GR
+31 TW RTV,dump site,post sampling,tyvek,leg,right,TW,991,5/7/2025,PPE Swab,S-991,GR
+32 TW LFB,dump site,post sampling,boot,,left,TW,992,5/7/2025,PPE Swab,S-992,GR
+33 TW RFB,dump site,post sampling,boot,,right,TW,993,5/7/2025,PPE Swab,S-993,GR
+,Negative site,Pre-sampling  ,Boot,Bottom ,left,GR,1,7/3/2025,PPE Swab,S-1,GR
+,Negative site,Pre-sampling  ,Boot,Bottom ,left ,GR,2,7/3/2025,PPE Swab,S-2,GR
+,Negative site,Pre-sampling  ,Boot,Toe,left ,GR,3,7/3/2025,PPE Swab,S-3,GR
+,Negative site,Pre-sampling  ,Boot,Bottom ,right ,GR,4,7/3/2025,PPE Swab,S-4,GR
+,Negative site,Pre-sampling  ,Boot,Bottom ,right ,GR,5,7/3/2025,PPE Swab,S-5,GR
+,Negative site,Pre-sampling  ,Boot,Toe,right ,GR,6,7/3/2025,PPE Swab,S-6,GR
+,Negative site,Pre-sampling  ,Boot,Bottom ,left,LW,7,7/3/2025,PPE Swab,S-7,GR
+,Negative site,Pre-sampling  ,Boot,Bottom ,left ,LW,8,7/3/2025,PPE Swab,S-8,GR
+,Negative site,Pre-sampling  ,Boot,Toe,left ,LW,9,7/3/2025,PPE Swab,S-9,GR
+,Negative site,Pre-sampling  ,Boot,Bottom ,right ,LW,10,7/3/2025,PPE Swab,S-10,GR
+,Negative site,Pre-sampling  ,Boot,Bottom ,right ,LW,11,7/3/2025,PPE Swab,S-11,GR
+,Negative site,Pre-sampling  ,Boot,Toe,right ,LW,12,7/3/2025,PPE Swab,S-12,GR
+,Negative site,Pre-sampling  ,Boot,Bottom ,left,MS,13,7/3/2025,PPE Swab,S-13,GR
+,Negative site,Pre-sampling  ,Boot,Bottom ,left ,MS,14,7/3/2025,PPE Swab,S-14,GR
+,Negative site,Pre-sampling  ,Boot,Toe,left ,MS,15,7/3/2025,PPE Swab,S-15,GR
+,Negative site,Pre-sampling  ,Boot,Bottom ,right ,MS,16,7/3/2025,PPE Swab,S-16,GR
+,Negative site,Pre-sampling  ,Boot,Bottom ,right ,MS,17,7/3/2025,PPE Swab,S-17,GR
+,Negative site,Pre-sampling  ,Boot,Toe,right ,MS,18,7/3/2025,PPE Swab,S-18,GR
+,Negative site,Pre-sampling  ,Boot,Bottom ,left,PL,19,7/3/2025,PPE Swab,S-19,GR
+,Negative site,Pre-sampling  ,Boot,Bottom ,left ,PL,20,7/3/2025,PPE Swab,S-20,GR
+,Negative site,Pre-sampling  ,Boot,Toe,left ,PL,21,7/3/2025,PPE Swab,S-21,GR
+,Negative site,Pre-sampling  ,Boot,Bottom ,right ,PL,22,7/3/2025,PPE Swab,S-22,GR
+,Negative site,Pre-sampling  ,Boot,Bottom ,right ,PL,23,7/3/2025,PPE Swab,S-23,GR
+,Negative site,Pre-sampling  ,Boot,Toe,right ,PL,24,7/3/2025,PPE Swab,S-24,GR
+,Negative site,Pre-sampling  ,Boot,Bottom ,left,FV,25,7/8/2025,PPE Swab,S-25,GR
+,Negative site,Pre-sampling  ,Boot,Bottom ,left ,FV,26,7/8/2025,PPE Swab,S-26,GR
+,Negative site,Pre-sampling  ,Boot,Toe,left ,FV,27,7/8/2025,PPE Swab,S-27,GR
+,Negative site,Pre-sampling  ,Boot,Bottom ,right ,FV,28,7/8/2025,PPE Swab,S-28,GR
+,Negative site,Pre-sampling  ,Boot,Bottom ,right ,FV,29,7/8/2025,PPE Swab,S-29,GR
+,Negative site,Pre-sampling  ,Boot,Toe,right ,FV,30,7/8/2025,PPE Swab,S-30,GR
+,Negative site,Post-sampling ,Boot,Bottom ,left,GR,31,7/8/2025,PPE Swab,S-31,GR
+,Negative site,Post-sampling ,Boot,Bottom ,left ,GR,32,7/8/2025,PPE Swab,S-32,GR
+,Negative site,Post-sampling ,Boot,Toe,left ,GR,33,7/8/2025,PPE Swab,S-33,GR
+,Negative site,Post-sampling ,Boot,Bottom ,right ,GR,34,7/8/2025,PPE Swab,S-34,GR
+,Negative site,Post-sampling ,Boot,Bottom ,right ,GR,35,7/8/2025,PPE Swab,S-35,GR
+,Negative site,Post-sampling ,Boot,Toe,right ,GR,36,7/8/2025,PPE Swab,S-36,GR
+,Negative site,Post-sampling ,Boot,Bottom ,left,LW,37,7/8/2025,PPE Swab,S-37,GR
+,Negative site,Post-sampling ,Boot,Bottom ,left ,LW,38,7/8/2025,PPE Swab,S-38,GR
+,Negative site,Post-sampling ,Boot,Toe,left ,LW,39,7/8/2025,PPE Swab,S-39,GR
+,Negative site,Post-sampling ,Boot,Bottom ,right ,LW,40,7/8/2025,PPE Swab,S-40,GR
+,Negative site,Post-sampling ,Boot,Bottom ,right ,LW,41,7/8/2025,PPE Swab,S-41,GR
+,Negative site,Post-sampling ,Boot,Toe,right ,LW,42,7/8/2025,PPE Swab,S-42,GR
+,Negative site,Post-sampling ,Boot,Bottom ,left,MS,43,7/8/2025,PPE Swab,S-43,GR
+,Negative site,Post-sampling ,Boot,Bottom ,left ,MS,44,7/8/2025,PPE Swab,S-44,GR
+,Negative site,Post-sampling ,Boot,Toe,left ,MS,45,7/8/2025,PPE Swab,S-45,GR
+,Negative site,Post-sampling ,Boot,Bottom ,right ,MS,46,7/8/2025,PPE Swab,S-46,GR
+,Negative site,Post-sampling ,Boot,Bottom ,right ,MS,47,7/8/2025,PPE Swab,S-47,GR
+,Negative site,Post-sampling ,Boot,Toe,right ,MS,48,7/8/2025,PPE Swab,S-48,GR
+,Negative site,Post-sampling ,Boot,Bottom ,left,PL,49,7/9/2025,PPE Swab,S-49,GR
+,Negative site,Post-sampling ,Boot,Bottom ,left ,PL,50,7/9/2025,PPE Swab,S-50,GR
+,Negative site,Post-sampling ,Boot,Toe,left ,PL,51,7/9/2025,PPE Swab,S-51,GR
+,Negative site,Post-sampling ,Boot,Bottom ,right ,PL,52,7/9/2025,PPE Swab,S-52,GR
+,Negative site,Post-sampling ,Boot,Bottom ,right ,PL,53,7/9/2025,PPE Swab,S-53,GR
+,Negative site,Post-sampling ,Boot,Toe,right ,PL,54,7/9/2025,PPE Swab,S-54,GR
+,Negative site,Post-sampling ,Boot,Bottom ,left,FV,55,7/9/2025,PPE Swab,S-55,GR
+,Negative site,Post-sampling ,Boot,Bottom ,left ,FV,56,7/9/2025,PPE Swab,S-56,GR
+,Negative site,Post-sampling ,Boot,Toe,left ,FV,57,7/9/2025,PPE Swab,S-57,GR
+,Negative site,Post-sampling ,Boot,Bottom ,right ,FV,58,7/9/2025,PPE Swab,S-58,GR
+,Negative site,Post-sampling ,Boot,Bottom ,right ,FV,59,7/9/2025,PPE Swab,S-59,GR
+,Negative site,Post-sampling ,Boot,Toe,right ,FV,60,7/9/2025,PPE Swab,S-60,GR
+,Negative site,Post-Decon ,Boot,Bottom ,left,GR,61,7/9/2025,PPE Swab,S-61,GR
+,Negative site,Post-Decon ,Boot,Bottom ,left ,GR,62,7/9/2025,PPE Swab,S-62,GR
+,Negative site,Post-Decon ,Boot,Toe,left ,GR,63,7/9/2025,PPE Swab,S-63,GR
+,Negative site,Post-Decon ,Boot,Bottom ,right ,GR,64,7/9/2025,PPE Swab,S-64,GR
+,Negative site,Post-Decon ,Boot,Bottom ,right ,GR,65,7/9/2025,PPE Swab,S-65,GR
+,Negative site,Post-Decon ,Boot,Toe,right ,GR,66,7/9/2025,PPE Swab,S-66,GR
+,Negative site,Post-Decon ,Boot,Bottom ,left,LW,67,7/9/2025,PPE Swab,S-67,GR
+,Negative site,Post-Decon ,Boot,Bottom ,left ,LW,68,7/9/2025,PPE Swab,S-68,GR
+,Negative site,Post-Decon ,Boot,Toe,left ,LW,69,7/9/2025,PPE Swab,S-69,GR
+,Negative site,Post-Decon ,Boot,Bottom ,right ,LW,70,7/9/2025,PPE Swab,S-70,GR
+,Negative site,Post-Decon ,Boot,Bottom ,right ,LW,71,7/9/2025,PPE Swab,S-71,GR
+,Negative site,Post-Decon ,Boot,Toe,right ,LW,72,7/9/2025,PPE Swab,S-72,GR
+,Negative site,Post-Decon ,Boot,Bottom ,left,MS,73,7/9/2025,PPE Swab,S-73,GR
+,Negative site,Post-Decon ,Boot,Bottom ,left ,MS,74,7/9/2025,PPE Swab,S-74,GR
+,Negative site,Post-Decon ,Boot,Toe,left ,MS,75,7/9/2025,PPE Swab,S-75,GR
+,Negative site,Post-Decon ,Boot,Bottom ,right ,MS,76,7/9/2025,PPE Swab,S-76,GR
+,Negative site,Post-Decon ,Boot,Bottom ,right ,MS,77,7/9/2025,PPE Swab,S-77,GR
+,Negative site,Post-Decon ,Boot,Toe,right ,MS,78,7/9/2025,PPE Swab,S-78,GR
+,Negative site,Post-Decon ,Boot,Bottom ,left,PL,79,7/9/2025,PPE Swab,S-79,GR
+,Negative site,Post-Decon ,Boot,Bottom ,left ,PL,80,7/9/2025,PPE Swab,S-80,GR
+,Negative site,Post-Decon ,Boot,Toe,left ,PL,81,7/9/2025,PPE Swab,S-81,GR
+,Negative site,Post-Decon ,Boot,Bottom ,right ,PL,82,7/9/2025,PPE Swab,S-82,GR
+,Negative site,Post-Decon ,Boot,Bottom ,right ,PL,83,7/9/2025,PPE Swab,S-83,GR
+,Negative site,Post-Decon ,Boot,Toe,right ,PL,84,7/9/2025,PPE Swab,S-84,GR
+,Negative site,Post-Decon ,Boot,Bottom ,left,FV,85,7/9/2025,PPE Swab,S-85,GR
+,Negative site,Post-Decon ,Boot,Bottom ,left ,FV,86,7/9/2025,PPE Swab,S-86,GR
+,Negative site,Post-Decon ,Boot,Toe,left ,FV,87,7/9/2025,PPE Swab,S-87,GR
+,Negative site,Post-Decon ,Boot,Bottom ,right ,FV,88,7/9/2025,PPE Swab,S-88,GR
+,Negative site,Post-Decon ,Boot,Bottom ,right ,FV,89,7/9/2025,PPE Swab,S-89,GR
+,Negative site,Post-Decon ,Boot,Toe,right ,FV,90,7/9/2025,PPE Swab,S-90,GR
+,Dump site,Pre-sampling  ,Boot,Bottom ,left,GR,91,7/9/2025,PPE Swab,S-91,GR
+,Dump site,Pre-sampling  ,Boot,Bottom ,left ,GR,92,7/9/2025,PPE Swab,S-92,GR
+,Dump site,Pre-sampling  ,Boot,Toe,left ,GR,93,7/9/2025,PPE Swab,S-93,GR
+,Dump site,Pre-sampling  ,Boot,Bottom ,right ,GR,94,7/9/2025,PPE Swab,S-94,GR
+,Dump site,Pre-sampling  ,Boot,Bottom ,right ,GR,95,7/9/2025,PPE Swab,S-95,GR
+,Dump site,Pre-sampling  ,Boot,Toe,right ,GR,96,7/9/2025,PPE Swab,S-96,GR
+,Dump site,Pre-sampling  ,Boot,Bottom ,left,LW,97,7/9/2025,PPE Swab,S-97,GR
+,Dump site,Pre-sampling  ,Boot,Bottom ,left ,LW,98,7/9/2025,PPE Swab,S-98,GR
+,Dump site,Pre-sampling  ,Boot,Toe,left ,LW,99,7/9/2025,PPE Swab,S-99,GR
+,Dump site,Pre-sampling  ,Boot,Bottom ,right ,LW,100,7/9/2025,PPE Swab,S-100,GR
+,Dump site,Pre-sampling  ,Boot,Bottom ,right ,LW,101,7/9/2025,PPE Swab,S-101,GR
+,Dump site,Pre-sampling  ,Boot,Toe,right ,LW,102,7/9/2025,PPE Swab,S-102,GR
+,Dump site,Pre-sampling  ,Boot,Bottom ,left,MS,103,7/9/2025,PPE Swab,S-103,GR
+,Dump site,Pre-sampling  ,Boot,Bottom ,left ,MS,104,7/9/2025,PPE Swab,S-104,GR
+,Dump site,Pre-sampling  ,Boot,Toe,left ,MS,105,7/9/2025,PPE Swab,S-105,GR
+,Dump site,Pre-sampling  ,Boot,Bottom ,right ,MS,106,7/9/2025,PPE Swab,S-106,GR
+,Dump site,Pre-sampling  ,Boot,Bottom ,right ,MS,107,7/9/2025,PPE Swab,S-107,GR
+,Dump site,Pre-sampling  ,Boot,Toe,right ,MS,108,7/9/2025,PPE Swab,S-108,GR
+,Dump site,Pre-sampling  ,Boot,Bottom ,left,PL,109,7/9/2025,PPE Swab,S-109,GR
+,Dump site,Pre-sampling  ,Boot,Bottom ,left ,PL,110,7/9/2025,PPE Swab,S-110,GR
+,Dump site,Pre-sampling  ,Boot,Toe,left ,PL,111,7/9/2025,PPE Swab,S-111,GR
+,Dump site,Pre-sampling  ,Boot,Bottom ,right ,PL,112,7/9/2025,PPE Swab,S-112,GR
+,Dump site,Pre-sampling  ,Boot,Bottom ,right ,PL,113,7/9/2025,PPE Swab,S-113,GR
+,Dump site,Pre-sampling  ,Boot,Toe,right ,PL,114,7/9/2025,PPE Swab,S-114,GR
+,Dump site,Pre-sampling  ,Boot,Bottom ,left,FV,115,7/9/2025,PPE Swab,S-115,GR
+,Dump site,Pre-sampling  ,Boot,Bottom ,left ,FV,116,7/9/2025,PPE Swab,S-116,GR
+,Dump site,Pre-sampling  ,Boot,Toe,left ,FV,117,7/9/2025,PPE Swab,S-117,GR
+,Dump site,Pre-sampling  ,Boot,Bottom ,right ,FV,118,7/9/2025,PPE Swab,S-118,GR
+,Dump site,Pre-sampling  ,Boot,Bottom ,right ,FV,119,7/9/2025,PPE Swab,S-119,GR
+,Dump site,Pre-sampling  ,Boot,Toe,right ,FV,120,7/9/2025,PPE Swab,S-120,GR
+,Dump site,Post-sampling ,Boot,Bottom ,left,GR,121,7/10/2025,PPE Swab,S-121,GR
+,Dump site,Post-sampling ,Boot,Bottom ,left ,GR,122,7/10/2025,PPE Swab,S-122,GR
+,Dump site,Post-sampling ,Boot,Toe,left ,GR,123,7/10/2025,PPE Swab,S-123,GR
+,Dump site,Post-sampling ,Boot,Bottom ,right ,GR,124,7/10/2025,PPE Swab,S-124,GR
+,Dump site,Post-sampling ,Boot,Bottom ,right ,GR,125,7/10/2025,PPE Swab,S-125,GR
+,Dump site,Post-sampling ,Boot,Toe,right ,GR,126,7/10/2025,PPE Swab,S-126,GR
+,Dump site,Post-sampling ,Boot,Bottom ,left,LW,127,7/10/2025,PPE Swab,S-127,GR
+,Dump site,Post-sampling ,Boot,Bottom ,left ,LW,128,7/10/2025,PPE Swab,S-128,GR
+,Dump site,Post-sampling ,Boot,Toe,left ,LW,129,7/10/2025,PPE Swab,S-129,GR
+,Dump site,Post-sampling ,Boot,Bottom ,right ,LW,130,7/10/2025,PPE Swab,S-130,GR
+,Dump site,Post-sampling ,Boot,Bottom ,right ,LW,131,7/10/2025,PPE Swab,S-131,GR
+,Dump site,Post-sampling ,Boot,Toe,right ,LW,132,7/10/2025,PPE Swab,S-132,GR
+,Dump site,Post-sampling ,Boot,Bottom ,left,MS,133,7/10/2025,PPE Swab,S-133,GR
+,Dump site,Post-sampling ,Boot,Bottom ,left ,MS,134,7/10/2025,PPE Swab,S-134,GR
+,Dump site,Post-sampling ,Boot,Toe,left ,MS,135,7/10/2025,PPE Swab,S-135,GR
+,Dump site,Post-sampling ,Boot,Bottom ,right ,MS,136,7/10/2025,PPE Swab,S-136,GR
+,Dump site,Post-sampling ,Boot,Bottom ,right ,MS,137,7/10/2025,PPE Swab,S-137,GR
+,Dump site,Post-sampling ,Boot,Toe,right ,MS,138,7/10/2025,PPE Swab,S-138,GR
+,Dump site,Post-sampling ,Boot,Bottom ,left,PL,139,7/10/2025,PPE Swab,S-139,GR
+,Dump site,Post-sampling ,Boot,Bottom ,left ,PL,140,7/10/2025,PPE Swab,S-140,GR
+,Dump site,Post-sampling ,Boot,Toe,left ,PL,141,7/10/2025,PPE Swab,S-141,GR
+,Dump site,Post-sampling ,Boot,Bottom ,right ,PL,142,7/10/2025,PPE Swab,S-142,GR
+,Dump site,Post-sampling ,Boot,Bottom ,right ,PL,143,7/10/2025,PPE Swab,S-143,GR
+,Dump site,Post-sampling ,Boot,Toe,right ,PL,144,7/10/2025,PPE Swab,S-144,GR
+,Dump site,Post-sampling ,Boot,Bottom ,left,FV,145,7/10/2025,PPE Swab,S-145,GR
+,Dump site,Post-sampling ,Boot,Bottom ,left ,FV,146,7/10/2025,PPE Swab,S-146,GR
+,Dump site,Post-sampling ,Boot,Toe,left ,FV,147,7/10/2025,PPE Swab,S-147,GR
+,Dump site,Post-sampling ,Boot,Bottom ,right ,FV,148,7/10/2025,PPE Swab,S-148,GR
+,Dump site,Post-sampling ,Boot,Bottom ,right ,FV,149,7/10/2025,PPE Swab,S-149,GR
+,Dump site,Post-sampling ,Boot,Toe,right ,FV,150,7/10/2025,PPE Swab,S-150,GR
+,Dump site,Post-Decon ,Boot,Bottom ,left,GR,151,7/10/2025,PPE Swab,S-151,GR
+,Dump site,Post-Decon ,Boot,Bottom ,left ,GR,152,7/10/2025,PPE Swab,S-152,GR
+,Dump site,Post-Decon ,Boot,Toe,left ,GR,153,7/10/2025,PPE Swab,S-153,GR
+,Dump site,Post-Decon ,Boot,Bottom ,right ,GR,154,7/10/2025,PPE Swab,S-154,GR
+,Dump site,Post-Decon ,Boot,Bottom ,right ,GR,155,7/10/2025,PPE Swab,S-155,GR
+,Dump site,Post-Decon ,Boot,Toe,right ,GR,156,7/10/2025,PPE Swab,S-156,GR
+,Dump site,Post-Decon ,Boot,Bottom ,left,LW,157,7/10/2025,PPE Swab,S-157,GR
+,Dump site,Post-Decon ,Boot,Bottom ,left ,LW,158,7/10/2025,PPE Swab,S-158,GR
+,Dump site,Post-Decon ,Boot,Toe,left ,LW,159,7/10/2025,PPE Swab,S-159,GR
+,Dump site,Post-Decon ,Boot,Bottom ,right ,LW,160,7/10/2025,PPE Swab,S-160,GR
+,Dump site,Post-Decon ,Boot,Bottom ,right ,LW,161,7/10/2025,PPE Swab,S-161,GR
+,Dump site,Post-Decon ,Boot,Toe,right ,LW,162,7/10/2025,PPE Swab,S-162,GR
+,Dump site,Post-Decon ,Boot,Bottom ,left,MS,163,7/10/2025,PPE Swab,S-163,GR
+,Dump site,Post-Decon ,Boot,Bottom ,left ,MS,164,7/10/2025,PPE Swab,S-164,GR
+,Dump site,Post-Decon ,Boot,Toe,left ,MS,165,7/10/2025,PPE Swab,S-165,GR
+,Dump site,Post-Decon ,Boot,Bottom ,right ,MS,166,7/10/2025,PPE Swab,S-166,GR
+,Dump site,Post-Decon ,Boot,Bottom ,right ,MS,167,7/10/2025,PPE Swab,S-167,GR
+,Dump site,Post-Decon ,Boot,Toe,right ,MS,168,7/10/2025,PPE Swab,S-168,GR
+,Dump site,Post-Decon ,Boot,Bottom ,left,PL,169,7/18/2025,PPE Swab,S-169,GR
+,Dump site,Post-Decon ,Boot,Bottom ,left ,PL,170,7/18/2025,PPE Swab,S-170,GR
+,Dump site,Post-Decon ,Boot,Toe,left ,PL,171,7/18/2025,PPE Swab,S-171,GR
+,Dump site,Post-Decon ,Boot,Bottom ,right ,PL,172,7/18/2025,PPE Swab,S-172,GR
+,Dump site,Post-Decon ,Boot,Bottom ,right ,PL,173,7/18/2025,PPE Swab,S-173,GR
+,Dump site,Post-Decon ,Boot,Toe,right ,PL,174,7/18/2025,PPE Swab,S-174,GR
+,Dump site,Post-Decon ,Boot,Bottom ,left,FV,175,7/18/2025,PPE Swab,S-175,GR
+,Dump site,Post-Decon ,Boot,Bottom ,left ,FV,176,7/18/2025,PPE Swab,S-176,GR
+,Dump site,Post-Decon ,Boot,Toe,left ,FV,177,7/18/2025,PPE Swab,S-177,GR
+,Dump site,Post-Decon ,Boot,Bottom ,right ,FV,178,7/18/2025,PPE Swab,S-178,GR
+,Dump site,Post-Decon ,Boot,Bottom ,right ,FV,179,7/18/2025,PPE Swab,S-179,GR
+,Dump site,Post-Decon ,Boot,Toe,right ,FV,180,7/18/2025,PPE Swab,S-180,GR
