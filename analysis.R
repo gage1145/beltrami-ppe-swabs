@@ -42,6 +42,7 @@ data <- read_csv("data/updated_metadata.csv", name_repair = "minimal") %>%
     TtT
   )) %>%
   mutate_at(c("Surface", "Location", "Timing", "Technician"), as.factor) %>%
+  mutate_at(c("MPR", "MS", "RAF", "TtT"), as.numeric) %>%
   mutate(
     Surface = relevel(Surface, "tyvek"),
     Location = relevel(Location, "negative site"),
