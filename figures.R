@@ -222,22 +222,26 @@ ggsave(
 
 
 
-for (file in list.files("raw", "spike_raw")) {
+for (file in list.files(c("raw", "spike_raw"), recursive=TRUE, full.names=TRUE)) {
+
+  file_list <- str_split(file, "/")[[1]]
+  depth <- length(file_list)
+  file_name <- file_list[depth] %>%
+    str_remove(".xlsx") 
   
-  file_name <- paste0(str_remove(file, ".xlsx"), "_plate_view.png")
-  
-  if (file.exists(paste0("figures/plate_views/", file_name))) {
-    print(paste(file_name, "already exists."))
+  save_name <- paste0(file_name, "_plate_view.png")
+
+  if (file.exists(paste0("figures/plate_views/", save_name))) {
+    print(paste("Plate view for", file_name, "already exists."))
     next
   }
   
-  plate_view(
-    get_real(paste0("raw/", file)),
-    get_sample_locations(paste0("raw/", file))
-  ) +
-    ggtitle(file)
-  
-  ggsave(file_name, path = "figures/plate_views", width = 12, height = 8)
-  
+  print(paste("Working on reaction:", file_name))
+
+  plate_view(get_quic(file), plot_deriv=FALSE) +
+    ggtitle(file_name)
+
+  ggsave(save_name, path = "figures/plate_views", width = 12, height = 8)
+
 }
 
