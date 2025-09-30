@@ -6,23 +6,9 @@ library(tidyverse)
 # file <- list.files("spike_raw", full.name=TRUE)[[1]]
 file <- "spike_raw/20250702_LW_BootRecovery2.xlsx"
 
-data <- get_real(file)[[1]] %>%
-  normalize_RFU()
-
-meta <- organize_tables(file) %>%
-  convert_tables()
-
-metrics <- data.frame(
-  `Sample IDs` = meta$`Sample IDs`,
-  Dilutions = -log10(as.integer(meta$Dilutions)),
-  check.names = FALSE
-) %>%
-  mutate(
-    MPR = calculate_MPR(data),
-    MS  = calculate_MS(data),
-    TtT = calculate_TtT(data, 2),
-    RAF = 1/TtT,
-  )
+metrics <- get_quic(file) %>%
+  calculate_metrics("Sample IDs", "Dilutions", "Wells") %>%
+  mutate(Dilutions = -log10(as.numeric(Dilutions)))
 
 metrics %>%
   filter(
