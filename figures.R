@@ -83,10 +83,12 @@ ggsave("boot_results.png", path = "figures", width = 6, height = 8)
 
 
 data <- read.csv("data/updated_metadata.csv", check.names = FALSE) %>%
+  mutate_at(c("Location", "Surface", "Timing"), tolower) %>%
+  mutate(Timing = str_replace(Timing, " ", "-")) %>%
   filter(!is.na(Technician), `Sample Type` == "PPE Swab") %>%
   mutate(
     Timing = factor(
-      Timing, levels = c("pre sampling", "post sampling", "post decon")
+      Timing, levels = c("pre-sampling", "post-sampling", "post-decon")
     ),
     Location = factor(
       Location, levels = c("negative site", "perimeter", "dump site")
@@ -159,7 +161,7 @@ ggsave("STL_raf.png", path = "figures", width = 14, height = 8)
 
 data %>%
   filter(Surface %in% c("blank", "boot")) %>%
-  filter(Timing != "post decon") %>%
+  filter(Timing != "post-decon") %>%
   ggplot(aes(Location, RAF, color = Timing)) +
   geom_boxplot(fill = NA, size = 1) +
   facet_grid(cols = vars(Surface)) +
@@ -178,8 +180,8 @@ ggsave("LTS_raf.png", path = "figures", width = 6, height = 8)
 # Surface Density Plots
 data %>%
   arrange(Location) %>%
-  filter(Timing != "post decon") %>%
-  select(MPR, MS, Location, Timing) %>%
+  filter(Timing != "post-decon") %>%
+  select(MPR, Location, Timing) %>%
   gather("key", "value", -c(Location, Timing)) %>%
   ggplot(aes(value, Location, fill = Timing)) +
   geom_density_ridges(alpha = 0.5, scale = 1.2) +

@@ -43,7 +43,7 @@ data <- read_csv("data/updated_metadata.csv", name_repair = "minimal") %>%
   mutate(
     Surface = relevel(Surface, "tyvek"),
     Location = relevel(Location, "negative site"),
-    Timing = relevel(Timing, "pre sampling")
+    Timing = relevel(Timing, "pre-sampling")
   )
 
 data_sum <- data %>%
@@ -119,6 +119,7 @@ write.csv(results, "data/results.csv", row.names = FALSE)
 
 
 boot_data <- read_csv("data/updated_metadata.csv", name_repair = "minimal") %>%
+  mutate(Timing = str_replace(Timing, " ", "-")) %>%
   mutate_at(c("Sample IDs", "Technician"), as.factor) %>%
   filter(Surface == "boot", !is.na(`Surface Location`)) %>%
   select(c(
@@ -138,7 +139,7 @@ boot_data <- read_csv("data/updated_metadata.csv", name_repair = "minimal") %>%
   rename_with(~str_replace(., " ", "_")) %>%
   mutate(
     Location = relevel(Location, "negative site"),
-    Timing = relevel(Timing, "pre sampling")
+    Timing = relevel(Timing, "pre-sampling")
   )
 
 model_MPR <- glm(MPR ~ Surface_Location + Location + Timing, data = boot_data)
