@@ -6,35 +6,16 @@ library(tidyverse)
 # file <- list.files("spike_raw", full.name=TRUE)[[1]]
 file <- "spike_raw/20250702_LW_BootRecovery2.xlsx"
 
-data <- get_real(file)[[1]] %>%
-  normalize_RFU()
-
-meta <- organize_tables(file) %>%
-  convert_tables()
-
-metrics <- data.frame(
-  `Sample IDs` = meta$`Sample IDs`,
-  Dilutions = -log10(as.integer(meta$Dilutions)),
-  check.names = FALSE
-) %>%
-  mutate(
-    MPR = calculate_MPR(data),
-    MS  = calculate_MS(data),
-    TtT = calculate_TtT(data, 2),
-    RAF = 1/TtT,
-  )
+metrics <- get_quic(file) %>%
+  calculate_metrics("Sample IDs", "Dilutions", "Wells") %>%
+  mutate(Dilutions = -log10(as.numeric(Dilutions)))
 
 metrics %>%
-  filter(
-    `Sample IDs` != "B",
-    # Dilutions == -3
-  ) %>%
-  # gather("key", "value", -c("Sample IDs", "Dilutions")) %>%
+  filter(`Sample IDs` != "B",) %>%
   mutate_at("Dilutions", as.factor) %>%
   ggplot(aes(`Sample IDs`, RAF, fill=Dilutions)) +
   geom_boxplot() +
   scale_fill_manual(values=c("green", "orange", "cyan", "red", "blue")) +
-  # facet_wrap(vars(key), scales="free") +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)
   )
@@ -49,7 +30,6 @@ write.csv(metrics, "spike_data/metrics.csv", row.names=FALSE)
 
 
 df_sum <- metrics %>%
-  # filter(Dilutions != -3) %>%
   group_by_at(1:2) %>%
   summarize(
     mean_RAF = mean(RAF),
@@ -90,7 +70,6 @@ predict_unknowns <- function(sample_name, data) {
   split_name <- str_split(sample_name, "_")
   sample_id <- split_name[[1]][1]
   timing <- split_name[[1]][2]
-  # sample_id <- sample_name
   data.frame(
     `Sample IDs` = c(sample_id),
     Timing = timing,
@@ -173,7 +152,7 @@ df_sum %>%
     data = predictions %>% filter(is.na(Timing) & real_dilutions == -3),
     linetype = "dashed"
   ) +
-  geom_text(label = expression(R^2 == 0.5834), x = -6.5, y = 0.15) +
+  # geom_text(label = expression(R^2 == 0.5834), x = -6.5, y = 0.15) +
   ggtitle("Positive Standard Curve") +
   xlab("Log Dilution Factor") +
   ylab("Rate of Amyloid Formation (1/s)") +

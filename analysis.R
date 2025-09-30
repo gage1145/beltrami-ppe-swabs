@@ -20,11 +20,13 @@ get_pairwise_comparisons <- function(factor_name, model) {
 
 
 data <- read_csv("data/updated_metadata.csv", name_repair = "minimal") %>%
+  mutate_all(tolower) %>%
+  mutate(Timing = str_replace(Timing, " ", "-")) %>%
   mutate_at(c("Sample IDs", "Technician"), as.factor) %>%
   filter(
     !is.na(Technician), 
-    `Sample Type` == "PPE Swab",
-    Timing != "post decon" # Exclude post decon since it only occurs with dump site boots?
+    `Sample Type` == "ppe swab",
+    Timing != "post-decon" # Exclude post decon since it only occurs with dump site boots?
   ) %>%
   select(c(
     `Sample IDs`, 
@@ -40,10 +42,11 @@ data <- read_csv("data/updated_metadata.csv", name_repair = "minimal") %>%
     TtT
   )) %>%
   mutate_at(c("Surface", "Location", "Timing", "Technician"), as.factor) %>%
+  mutate_at(c("MPR", "MS", "RAF", "TtT"), as.numeric) %>%
   mutate(
     Surface = relevel(Surface, "tyvek"),
     Location = relevel(Location, "negative site"),
-    Timing = relevel(Timing, "pre sampling")
+    Timing = relevel(Timing, "pre-sampling")
   )
 
 data_sum <- data %>%
@@ -119,6 +122,8 @@ write.csv(results, "data/results.csv", row.names = FALSE)
 
 
 boot_data <- read_csv("data/updated_metadata.csv", name_repair = "minimal") %>%
+  mutate_all(tolower) %>%
+  mutate(Timing = str_replace(Timing, " ", "-")) %>%
   mutate_at(c("Sample IDs", "Technician"), as.factor) %>%
   filter(Surface == "boot", !is.na(`Surface Location`)) %>%
   select(c(
@@ -135,10 +140,11 @@ boot_data <- read_csv("data/updated_metadata.csv", name_repair = "minimal") %>%
     TtT
   )) %>%
   mutate_at(c("Surface", "Location", "Timing", "Technician"), as.factor) %>%
-  rename_with(~str_replace(., " ", "_")) %>%
+  mutate_at(c("MPR", "MS", "RAF", "TtT"), as.numeric) %>%
+  rename_with(~str_replace(., " ", "_")) %>% 
   mutate(
     Location = relevel(Location, "negative site"),
-    Timing = relevel(Timing, "pre sampling")
+    Timing = relevel(Timing, "pre-sampling")
   )
 
 model_MPR <- glm(MPR ~ Surface_Location + Location + Timing, data = boot_data)

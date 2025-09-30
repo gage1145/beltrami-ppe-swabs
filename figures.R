@@ -1,8 +1,10 @@
 library(dplyr)
 library(ggplot2)
-# library(quicR)
+library(quicR)
 library(ggridges)
 library(readr)
+library(forcats)
+library(stringr)
 
 
 
@@ -47,6 +49,7 @@ ggsave("results.png", path = "figures", width = 8, height = 8)
 # Boot Results
 boot_results <- read.csv("data/boot_results.csv", check.names = FALSE)
 boot_results %>%
+  filter(term != "Surface_Location") %>%
   arrange(contrast) %>%
   mutate(p.value = signif(p.value, 4)) %>%
   ggplot(
@@ -55,7 +58,7 @@ boot_results %>%
       estimate, 
       ymin = estimate - std.error, 
       ymax = estimate + std.error,
-      color = p.value < 0.05
+      color = p.value
     )
   ) +
   geom_pointrange(
@@ -64,7 +67,7 @@ boot_results %>%
   geom_hline(yintercept = 0, linewidth = 1.2, linetype = "dashed") +
   geom_label(aes(label = p.value), nudge_x = 0.3, size = 3) +
   facet_grid(term ~ metric, scale = "free", space = "free_y") +
-  scale_colour_manual(values = c("navy", "darkred")) +
+  scale_colour_gradient(high="navy", low="darkred") +
   # scale_y_continuous(limits = c(-1, 1)) +
   coord_flip() +
   theme(
@@ -76,15 +79,17 @@ boot_results %>%
     legend.text = element_text(size = 12),
     legend.position = "bottom"
   )
-ggsave("boot_results.png", path = "figures", width = 8, height = 8)
+ggsave("boot_results.png", path = "figures", width = 6, height = 8)
 
 
 
 data <- read.csv("data/updated_metadata.csv", check.names = FALSE) %>%
+  mutate_at(c("Location", "Surface", "Timing"), tolower) %>%
+  mutate(Timing = str_replace(Timing, " ", "-")) %>%
   filter(!is.na(Technician), `Sample Type` == "PPE Swab") %>%
   mutate(
     Timing = factor(
-      Timing, levels = c("pre sampling", "post sampling", "post decon")
+      Timing, levels = c("pre-sampling", "post-sampling", "post-decon")
     ),
     Location = factor(
       Location, levels = c("negative site", "perimeter", "dump site")
@@ -125,6 +130,7 @@ density_theme <- theme(
 
 
 data %>%
+  filter(Surface %in% c("blank", "boot")) %>%
   ggplot(aes(Timing, RAF, color = Location)) +
   geom_boxplot(fill = NA, size = 1) +
   facet_grid(cols = vars(Surface)) +
@@ -132,7 +138,7 @@ data %>%
   scale_y_continuous(limits = c(0.013, 0.04)) +
   ggtitle("Surface RAFs by Location") +
   box_theme
-ggsave("TLS_raf.png", path = "figures", width = 14, height = 8)
+ggsave("TLS_raf.png", path = "figures", width = 6, height = 8)
 
 data %>%
   ggplot(aes(Timing, RAF, color = Surface)) +
@@ -155,6 +161,8 @@ data %>%
 ggsave("STL_raf.png", path = "figures", width = 14, height = 8)
 
 data %>%
+  filter(Surface %in% c("blank", "boot")) %>%
+  filter(Timing != "post-decon") %>%
   ggplot(aes(Location, RAF, color = Timing)) +
   geom_boxplot(fill = NA, size = 1) +
   facet_grid(cols = vars(Surface)) +
@@ -162,7 +170,7 @@ data %>%
   ggtitle("Surface RAFs by Location") +
   scale_y_continuous(limits=c(0.013,0.04)) +
   box_theme
-ggsave("LTS_raf.png", path = "figures", width = 14, height = 8)
+ggsave("LTS_raf.png", path = "figures", width = 6, height = 8)
 
 
 
@@ -173,15 +181,17 @@ ggsave("LTS_raf.png", path = "figures", width = 14, height = 8)
 # Surface Density Plots
 data %>%
   arrange(Location) %>%
-  filter(Timing != "post decon") %>%
-  select(MPR, MS, Location, Timing) %>%
+  filter(Timing != "post-decon") %>%
+  filter(Surface == "boot") %>%
+  select(MPR, Location, Timing) %>%
   gather("key", "value", -c(Location, Timing)) %>%
   ggplot(aes(value, Location, fill = Timing)) +
   geom_density_ridges(alpha = 0.5, scale = 1.2) +
   facet_wrap(vars(key), nrow=2, scales = "free", strip.position = "right") +
   scale_fill_manual(values = c("darkcyan", "darkred", "darkorange")) +
   scale_y_discrete(expand = expansion(mult = c(0.025,0.5))) +
-  ggtitle("Density Plots of Surface MPRs by Sample Timing") +
+  scale_x_continuous(limits=c(0,10)) +
+  ggtitle("Density Plots of Boot MPRs by Sample Timing") +
   density_theme
 ggsave("location_timing_density.png", path = "figures", width = 14, height = 8)
 
@@ -190,13 +200,14 @@ ggsave("location_timing_density.png", path = "figures", width = 14, height = 8)
 data %>%
   filter(Timing != "post decon") %>%
   arrange(Surface) %>%
-  select(MPR, MS, Surface, Location, Timing) %>%
+  select(MPR, Surface, Location, Timing) %>%
   gather("key", "value", -c(Surface, Location, Timing)) %>%
-  ggplot(aes(value, fct_rev(Surface), fill = Location, linetype = Timing)) +
+  ggplot(aes(value, Location, fill = Surface)) +
   geom_density_ridges(alpha = 0.5, linewidth = 0.75, scale = 1.2) +
   facet_wrap(vars(key), nrow=2, scales = "free", strip.position = "right") +
-  scale_fill_manual(values = c("darkcyan", "darkred", "darkorange")) +
+  scale_fill_manual(values = c("darkcyan", "darkred", "darkorange", "cyan")) +
   scale_y_discrete(expand = expansion(mult = c(0.025,0.35))) +
+  scale_x_continuous(limits=c(0,10)) +
   # scale_x_continuous(limits = c(0, 10)) +
   ggtitle("Density Plots of Surface MPRs by Location & Timing") +
   density_theme
@@ -209,28 +220,75 @@ ggsave(
 
 
 
+# Boot figures ------------------------------------------------------------
+
+
+
+# boot_data <- read.csv("data/boot_analyzed.csv", check.names = FALSE)
+results <- read.csv("data/boot_results.csv", check.names = FALSE)
+
+
+results %>%
+  # rename("Surface" = "Surface_Location") %>%
+  arrange(contrast) %>%
+  mutate(
+    term = ifelse(term == "Surface_Location", "Surface", term),
+    p.value = signif(p.value, 4)) %>%
+  ggplot(
+    aes(
+      fct_inorder(contrast), 
+      estimate, 
+      ymin = estimate - std.error, 
+      ymax = estimate + std.error,
+      color = p.value < 0.05
+    )
+  ) +
+  geom_pointrange(
+    position = position_dodge(width = 0.4), size = 1, linewidth = 1
+  ) +
+  geom_hline(yintercept = 0, linewidth = 1.2, linetype = "dashed") +
+  geom_label(aes(label = p.value), nudge_x = 0.3, size = 3) +
+  facet_grid(term ~ metric, scale = "free", space = "free_y") +
+  scale_colour_manual(values = c("navy", "darkred")) +
+  coord_flip() +
+  theme(
+    axis.title.y = element_blank(),
+    axis.text = element_text(size = 12),
+    axis.title.x = element_text(size = 14, face = "bold"),
+    strip.text = element_text(size = 14, face = "bold"),
+    legend.title = element_text(size = 14),
+    legend.text = element_text(size = 12),
+    legend.position = "bottom"
+  )
+ggsave("boot_results.png", path = "figures", width = 8, height = 8)
+
+
+
 
 
 # Plate Views -------------------------------------------------------------
 
 
 
-for (file in list.files("raw", "spike_raw")) {
+for (file in list.files(c("raw", "spike_raw"), recursive=TRUE, full.names=TRUE)) {
+
+  file_list <- str_split(file, "/")[[1]]
+  depth <- length(file_list)
+  file_name <- file_list[depth] %>%
+    str_remove(".xlsx") 
   
-  file_name <- paste0(str_remove(file, ".xlsx"), "_plate_view.png")
-  
-  if (file.exists(paste0("figures/plate_views/", file_name))) {
-    print(paste(file_name, "already exists."))
+  save_name <- paste0(file_name, "_plate_view.png")
+
+  if (file.exists(paste0("figures/plate_views/", save_name))) {
+    print(paste("Plate view for", file_name, "already exists."))
     next
   }
-  
-  plate_view(
-    get_real(paste0("raw/", file)),
-    get_sample_locations(paste0("raw/", file))
-  ) +
-    ggtitle(file)
-  
-  ggsave(file_name, path = "figures/plate_views", width = 12, height = 8)
-  
+  print(paste("Working on reaction:", file_name))
+
+  plate_view(get_quic(file), plot_deriv=FALSE) +
+    ggtitle(file_name)
+
+  ggsave(save_name, path = "figures/plate_views", width = 12, height = 8)
+
 }
 
