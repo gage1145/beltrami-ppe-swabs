@@ -122,6 +122,8 @@ results %>%
 
 ![Estimates of each contrast. Plot is facetted by factor and metric (MPR or MS). Estimates are labelled with their p-value and colored based on significance.](figures/results.png)
 
+![Estimates of boot contrasts. Plot is facetted by factor and metric (MPR or MS). Estmates are labelled with their p-value and colored based on significance.](figures/boot_results.png)
+
 ![Rates of amyloid formation by swab surface. Figure is facetted based on location and colored based on timing.](figures/STL_raf.png)
 
 ![Density plot of MPRs for each location. Curves are filled based on timing.](figures/location_timing_density.png)
