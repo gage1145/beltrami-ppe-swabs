@@ -32,7 +32,7 @@ results %>%
   ) +
   geom_hline(yintercept = 0, linewidth = 1.2, linetype = "dashed") +
   geom_label(aes(label = p.value), nudge_x = 0.3, size = 3) +
-  facet_grid(term ~ metric, scale = "free", space = "free_y") +
+  facet_grid(vars(term), scale = "free", space = "free_y") +
   scale_colour_manual(values = c("navy", "darkred")) +
   coord_flip() +
   theme(
@@ -66,7 +66,7 @@ boot_results %>%
   ) +
   geom_hline(yintercept = 0, linewidth = 1.2, linetype = "dashed") +
   geom_label(aes(label = p.value), nudge_x = 0.3, size = 3) +
-  facet_grid(term ~ metric, scale = "free", space = "free_y") +
+  facet_grid(vars(term), scale = "free", space = "free_y") +
   scale_colour_gradient(high="navy", low="darkred") +
   # scale_y_continuous(limits = c(-1, 1)) +
   coord_flip() +
@@ -131,44 +131,48 @@ density_theme <- theme(
 
 data %>%
   filter(Surface %in% c("blank", "boot")) %>%
-  ggplot(aes(Timing, RAF, color = Location)) +
-  geom_boxplot(fill = NA, size = 1) +
+  ggplot(aes(Timing, MPR, color = Location)) +
+  geom_boxplot(size = 1) +
   facet_grid(cols = vars(Surface)) +
   scale_color_manual(values = c("darkcyan", "darkorange", "maroon")) +
-  scale_y_continuous(limits = c(0.013, 0.04)) +
-  ggtitle("Surface RAFs by Location") +
+  scale_y_log10() +
+  # scale_y_continuous(limits = c(0.013, 0.04)) +
+  ggtitle("Surface MPRs by Location") +
   box_theme
 ggsave("TLS_raf.png", path = "figures", width = 6, height = 8)
 
 data %>%
-  ggplot(aes(Timing, RAF, color = Surface)) +
+  ggplot(aes(Timing, MPR, color = Surface)) +
   geom_boxplot(fill = NA, size = 1) +
   facet_grid(cols = vars(Location)) +
   scale_color_manual(values = c("darkcyan", "cyan3", "forestgreen", "darkorange", "maroon")) +
-  ggtitle("Surface RAFs by Location") +
-  scale_y_continuous(limits=c(0.013,0.04)) +
+  ggtitle("Surface MPRs by Location") +
+  scale_y_log10() +
+  # scale_y_continuous(limits=c(0.013,0.04)) +
   box_theme
 ggsave("TSL_raf.png", path = "figures", width = 14, height = 8)
 
 data %>%
-  ggplot(aes(Surface, RAF, color = Timing)) +
+  ggplot(aes(Surface, MPR, color = Timing)) +
   geom_boxplot(fill = NA, size = 1) +
   facet_grid(cols = vars(Location)) +
   scale_color_manual(values = c("darkcyan", "darkorange", "maroon")) +
-  ggtitle("Surface RAFs by Location") +
-  scale_y_continuous(limits=c(0.013,0.04)) +
+  ggtitle("Surface MPRs by Location") +
+  # scale_y_continuous(limits=c(0.013,0.04)) +
+  scale_y_log10() +
   box_theme
 ggsave("STL_raf.png", path = "figures", width = 14, height = 8)
 
 data %>%
   filter(Surface %in% c("blank", "boot")) %>%
   filter(Timing != "post-decon") %>%
-  ggplot(aes(Location, RAF, color = Timing)) +
+  ggplot(aes(Location, MPR, color = Timing)) +
   geom_boxplot(fill = NA, size = 1) +
   facet_grid(cols = vars(Surface)) +
   scale_color_manual(values = c("darkcyan", "darkorange", "maroon")) +
-  ggtitle("Surface RAFs by Location") +
-  scale_y_continuous(limits=c(0.013,0.04)) +
+  ggtitle("Surface MPRs by Location") +
+  scale_y_log10() +
+  # scale_y_continuous(limits=c(0.013,0.04)) +
   box_theme
 ggsave("LTS_raf.png", path = "figures", width = 6, height = 8)
 
@@ -178,91 +182,46 @@ ggsave("LTS_raf.png", path = "figures", width = 6, height = 8)
 
 
 
-# Surface Density Plots
+# Boot Density Plots
 data %>%
   arrange(Location) %>%
   filter(Timing != "post-decon") %>%
   filter(Surface == "boot") %>%
-  select(MPR, Location, Timing) %>%
+  select(MPR, MS, Location, Timing) %>%
   gather("key", "value", -c(Location, Timing)) %>%
   ggplot(aes(value, Location, fill = Timing)) +
   geom_density_ridges(alpha = 0.5, scale = 1.2) +
   facet_wrap(vars(key), nrow=2, scales = "free", strip.position = "right") +
   scale_fill_manual(values = c("darkcyan", "darkred", "darkorange")) +
   scale_y_discrete(expand = expansion(mult = c(0.025,0.5))) +
-  scale_x_continuous(limits=c(0,10)) +
-  ggtitle("Density Plots of Boot MPRs by Sample Timing") +
+  # scale_x_log10() +
+  # scale_x_continuous(limits=c(0,10)) +
+  ggtitle("Density Plots of Boot MPR/MS by Sample Timing") +
   density_theme
-ggsave("location_timing_density.png", path = "figures", width = 14, height = 8)
+ggsave("location_timing_density.png", path = "figures", width = 18, height = 9)
 
 
 # Surface Density Plots
 data %>%
   filter(Timing != "post decon") %>%
   arrange(Surface) %>%
-  select(MPR, Surface, Location, Timing) %>%
+  select(MPR, MS, Surface, Location, Timing) %>%
   gather("key", "value", -c(Surface, Location, Timing)) %>%
   ggplot(aes(value, Location, fill = Surface)) +
   geom_density_ridges(alpha = 0.5, linewidth = 0.75, scale = 1.2) +
   facet_wrap(vars(key), nrow=2, scales = "free", strip.position = "right") +
   scale_fill_manual(values = c("darkcyan", "darkred", "darkorange", "cyan")) +
   scale_y_discrete(expand = expansion(mult = c(0.025,0.35))) +
-  scale_x_continuous(limits=c(0,10)) +
-  # scale_x_continuous(limits = c(0, 10)) +
+  scale_x_log10() +
+  # scale_x_continuous(limits=c(0,10)) +
   ggtitle("Density Plots of Surface MPRs by Location & Timing") +
   density_theme
 ggsave(
   "surface_location_timing_density.png",
   path = "figures",
-  width = 14,
-  height = 8
+  width = 18,
+  height = 9
 )
-
-
-
-# Boot figures ------------------------------------------------------------
-
-
-
-# boot_data <- read.csv("data/boot_analyzed.csv", check.names = FALSE)
-results <- read.csv("data/boot_results.csv", check.names = FALSE)
-
-
-results %>%
-  # rename("Surface" = "Surface_Location") %>%
-  arrange(contrast) %>%
-  mutate(
-    term = ifelse(term == "Surface_Location", "Surface", term),
-    p.value = signif(p.value, 4)) %>%
-  ggplot(
-    aes(
-      fct_inorder(contrast), 
-      estimate, 
-      ymin = estimate - std.error, 
-      ymax = estimate + std.error,
-      color = p.value < 0.05
-    )
-  ) +
-  geom_pointrange(
-    position = position_dodge(width = 0.4), size = 1, linewidth = 1
-  ) +
-  geom_hline(yintercept = 0, linewidth = 1.2, linetype = "dashed") +
-  geom_label(aes(label = p.value), nudge_x = 0.3, size = 3) +
-  facet_grid(term ~ metric, scale = "free", space = "free_y") +
-  scale_colour_manual(values = c("navy", "darkred")) +
-  coord_flip() +
-  theme(
-    axis.title.y = element_blank(),
-    axis.text = element_text(size = 12),
-    axis.title.x = element_text(size = 14, face = "bold"),
-    strip.text = element_text(size = 14, face = "bold"),
-    legend.title = element_text(size = 14),
-    legend.text = element_text(size = 12),
-    legend.position = "bottom"
-  )
-ggsave("boot_results.png", path = "figures", width = 8, height = 8)
-
-
 
 
 

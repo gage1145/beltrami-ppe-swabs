@@ -71,8 +71,8 @@ data_sum <- data %>%
 #   data = data
 # )
 
-model_MPR <- glm(
-  MPR ~ Surface + Location + Timing,
+mod <- glm(
+  MPR + MS ~ Surface + Location + Timing,
   data = data
 )
 # summary(model_MPR)
@@ -85,10 +85,10 @@ model_MPR <- glm(
 #   geom_point() +
 #   geom_smooth(method="glm")
 
-model_MS <- glm(
-  MS ~ Surface + Location + Timing,
-  data = data
-)
+# model_MS <- glm(
+#   MS ~ Surface + Location + Timing,
+#   data = data
+# )
 # model_MS <- lmer(# Model for MS
 #   # MS ~ Surface + Location + Timing + (1 | `Surface Location`),
 #   MS ~ Surface + Location + Timing + (1 | Technician),
@@ -99,17 +99,17 @@ model_MS <- glm(
 
 # Apply to each fixed effect
 factors <- c("Surface", "Location", "Timing")
+results <- lapply(factors, get_pairwise_comparisons, model = mod) %>%
+  bind_rows()
 
-results <- bind_rows(
-  # MPR results
-  lapply(factors, get_pairwise_comparisons, model = model_MPR) %>%
-    bind_rows() %>%
-    mutate(metric = "MPR"),
-  # MS results
-  lapply(factors, get_pairwise_comparisons, model = model_MS) %>%
-    bind_rows() %>%
-    mutate(metric = "MS")
-)
+
+# results <- bind_rows(
+# 
+#   # MS results
+#   lapply(factors, get_pairwise_comparisons, model = model_MS) %>%
+#     bind_rows() %>%
+#     mutate(metric = "MS")
+# )
   # arrange(p.value)
 
 write.csv(data, "data/analyzed.csv", row.names = FALSE)
@@ -147,20 +147,12 @@ boot_data <- read_csv("data/updated_metadata.csv", name_repair = "minimal") %>%
     Timing = relevel(Timing, "pre-sampling")
   )
 
-model_MPR <- glm(MPR ~ Surface_Location + Location + Timing, data = boot_data)
-model_MS <- glm(MS ~ Surface_Location + Location + Timing, data = boot_data)
+mod <- glm(MPR + MS ~ Surface_Location + Location + Timing, data = boot_data)
+# model_MS <- glm(MS ~ Surface_Location + Location + Timing, data = boot_data)
 
 factors <- c("Surface_Location", "Location", "Timing")
-boot_results <- bind_rows(
-  # MPR results
-  lapply(factors, get_pairwise_comparisons, model = model_MPR) %>%
-    bind_rows() %>%
-    mutate(metric = "MPR"),
-  # MS results
-  lapply(factors, get_pairwise_comparisons, model = model_MS) %>%
-    bind_rows() %>%
-    mutate(metric = "MS")
-)
+boot_results <- lapply(factors, get_pairwise_comparisons, model = mod) %>%
+  bind_rows()
 
 write.csv(boot_data, "data/boot_analyzed.csv", row.names = FALSE)
 write.csv(boot_results, "data/boot_results.csv", row.names = FALSE)
