@@ -1,5 +1,6 @@
 library(dplyr)
 library(ggplot2)
+library(ggpubr)
 library(quicR)
 library(ggridges)
 library(readr)
@@ -68,7 +69,6 @@ boot_results %>%
   geom_label(aes(label = p.value), nudge_x = 0.3, size = 3) +
   facet_grid(term ~ metric, scale = "free", space = "free_y") +
   scale_colour_gradient(high="navy", low="darkred") +
-  # scale_y_continuous(limits = c(-1, 1)) +
   coord_flip() +
   theme(
     axis.title.y = element_blank(),
@@ -117,7 +117,6 @@ density_theme <- theme(
     axis.title.x = element_text(size = 14),
     axis.title.y = element_blank(),
     axis.text = element_text(size = 12),
-    # axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.5),
     legend.title = element_text(size = 12),
     legend.text = element_text(size = 12),
     legend.position = "bottom"
@@ -126,6 +125,9 @@ density_theme <- theme(
 
 
 # Box Plots ---------------------------------------------------------------
+
+
+comp <- wilcox.test()
 
 
 
@@ -163,12 +165,33 @@ ggsave("STL_raf.png", path = "figures", width = 14, height = 8)
 data %>%
   filter(Surface %in% c("blank", "boot")) %>%
   filter(Timing != "post-decon") %>%
-  ggplot(aes(Location, RAF, color = Timing)) +
+  ggplot(aes(Location, MPR, color = Timing)) +
   geom_boxplot(fill = NA, size = 1) +
+  stat_compare_means(
+    method = "anova",
+    label = "p.signif",
+    label.y = 6.5,
+    tip.length = 0.01,
+    size=7,
+    show.legend = FALSE
+  ) +
+  stat_compare_means(
+    method = "t.test",
+    comparisons = list(
+      c("negative site", "dump site"), 
+      c("negative site", "perimeter"), 
+      c("dump site", "perimeter")
+    ),
+    label = "p.signif",
+    label.y = c(10,9,9.5),
+    tip.length = 0.01,
+    size=7,
+    show.legend = FALSE
+  ) +
   facet_grid(cols = vars(Surface)) +
   scale_color_manual(values = c("darkcyan", "darkorange", "maroon")) +
   ggtitle("Surface RAFs by Location") +
-  scale_y_continuous(limits=c(0.013,0.04)) +
+  coord_cartesian(ylim=c(1, 12), xlim=c(0.5, 3.5), expand=FALSE) +
   box_theme
 ggsave("LTS_raf.png", path = "figures", width = 6, height = 8)
 
@@ -229,7 +252,6 @@ results <- read.csv("data/boot_results.csv", check.names = FALSE)
 
 
 results %>%
-  # rename("Surface" = "Surface_Location") %>%
   arrange(contrast) %>%
   mutate(
     term = ifelse(term == "Surface_Location", "Surface", term),
