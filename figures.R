@@ -1,4 +1,5 @@
 library(tidyverse)
+library(quicR)
 
 
 
@@ -11,7 +12,13 @@ df_ <- read.csv("data/data.csv", check.names = FALSE) %>%
   filter(!(`Sample IDs` %in% c("N", "P"))) %>%
   left_join(meta, "Sample IDs")
 
+mean_neg_raf <- {df_ %>%
+  filter(is.na(ID)) %>%
+  summarize(mean_raf = mean(RAF))}[[1,1]]
 
+dodge_amount = 0.04
+
+# Square Format
 df_ %>%
   separate_wider_delim(
     ID, 
@@ -20,21 +27,53 @@ df_ %>%
     too_few = "align_start", 
     too_many = "merge"
   ) %>%
-  # filter(Date != unique(Date)[1]) %>%
-  ggplot(aes(Feeder, RAF, fill = Plate)) +
-  geom_boxplot() +
-  facet_grid(
-    cols = vars(`Period in environment`), 
-    rows = vars(Date), 
-    space = "free_x", 
-    scales = "free"
+  mutate(RAF = RAF - mean_neg_raf) %>%
+  mutate(RAF = ifelse(RAF <= 0, 0, RAF)) %>%
+  filter(Date != unique(Date)[2]) %>%
+  filter(`Period in environment` != 'Aug 2021 - July 2024') %>%
+  filter(Plate != 'Plastic') %>%
+  group_by(Feeder, Year, Locale) %>%
+  summarize(
+    mean_RAF = mean(RAF),
+    sd_RAF = sd(RAF),
+    ymin=ifelse(mean_RAF-sd_RAF < 0, 0, mean_RAF-sd_RAF), 
+    ymax=mean_RAF+sd_RAF, 
+  ) %>%
+  ggplot(aes(
+    Year, 
+    mean_RAF,
+    ymin=ymin,
+    ymax=ymax,
+    color=Feeder,
+    fill=Feeder,
+    linetype=Locale
+  )) +
+  geom_line(
+    linewidth=1.5, 
+    position = position_dodge(width=dodge_amount)
+  ) +
+  geom_point(
+    size=4.5, 
+    position=position_dodge(width=dodge_amount)
+  ) +
+  geom_errorbar(
+    linewidth=0.6, 
+    linetype='solid', 
+    position = position_dodge(width=dodge_amount)
+  ) +
+  scale_x_continuous(minor_breaks = seq(0, 3, 1/12)) +
+  labs(
+    y = "Background Corrected RAF",
+    x = "Years"
+  ) +
+  theme_bw() +
+  theme(
+    axis.title = element_text(size=20),
+    axis.text = element_text(size=16),
+    legend.title = element_text(size=20),
+    legend.text = element_text(size=16)
   )
-
-# df_ %>%
-#   filter(Date != unique(Date)[1]) %>%
-#   ggplot(aes(`Sample IDs`, RAF, fill = Date)) +
-#   geom_boxplot() +
-#   facet_grid(~`ID`, space = "free_x", scales = "free")
+ggsave("raf_over_time.png", path="figures", width=12, height=12)
 
 
 
