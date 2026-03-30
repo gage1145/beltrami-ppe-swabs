@@ -1,40 +1,32 @@
 library(tidyverse)
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthhires)
+library(rnaturalearthdata)
 
 
 
-meta <- read.csv("data/meta.csv", check.names = FALSE) %>%
-  mutate_at("Sample IDs", as.character) %>%
-  na.omit()
-
-df_ <- read.csv("data/data.csv", check.names = FALSE) %>%
-  mutate_at("Sample IDs", ~str_remove(., " ")) %>%
-  filter(!(`Sample IDs` %in% c("N", "P"))) %>%
-  left_join(meta, "Sample IDs")
-
+df_ <- read.csv("data/data.csv", check.names = FALSE)
 
 df_ %>%
-  separate_wider_delim(
-    ID, 
-    " ", 
-    names = c("Feeder", "Plate"), 
-    too_few = "align_start", 
-    too_many = "merge"
-  ) %>%
-  # filter(Date != unique(Date)[1]) %>%
-  ggplot(aes(Feeder, RAF, fill = Plate)) +
-  geom_boxplot() +
-  facet_grid(
-    cols = vars(`Period in environment`), 
-    rows = vars(Date), 
-    space = "free_x", 
-    scales = "free"
-  )
+  filter(!is.na(Feeder) & !is.na(Side)) %>%
+  ggplot(aes(time_since_start, AUC, color = Feeder)) +
+  geom_point() +
+  facet_grid(vars(Side))
 
-# df_ %>%
-#   filter(Date != unique(Date)[1]) %>%
-#   ggplot(aes(`Sample IDs`, RAF, fill = Date)) +
-#   geom_boxplot() +
-#   facet_grid(~`ID`, space = "free_x", scales = "free")
+local_map <- ne_download("large", "states", category="raster") %>%
+  filter(name == "Minnesota")
+
+df_map <- df_ %>%
+  filter(!is.na(Lat) & str_detect(Feeder, "ctrl", negate = TRUE))
+
+local_map %>%
+  ggplot() +
+  geom_sf(fill="lightgrey", color="black") +
+  geom_point(aes(Long, Lat, size=AUC), data = df_map) +
+
+
+ggsave("boxplot.png", path="figures", width=16, height=8)
 
 
 
