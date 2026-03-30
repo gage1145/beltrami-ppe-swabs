@@ -8,6 +8,7 @@ library(rnaturalearthdata)
 
 df_ <- read.csv("data/data.csv", check.names = FALSE)
 
+# Square Format
 df_ %>%
   filter(!is.na(Feeder) & !is.na(Side)) %>%
   ggplot(aes(time_since_start, AUC, color = Feeder)) +
