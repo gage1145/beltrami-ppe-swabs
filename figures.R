@@ -127,7 +127,7 @@ density_theme <- theme(
 # Box Plots ---------------------------------------------------------------
 
 
-comp <- wilcox.test()
+# comp <- wilcox.test()
 
 
 
@@ -164,36 +164,89 @@ ggsave("STL_raf.png", path = "figures", width = 14, height = 8)
 
 data %>%
   filter(Surface %in% c("blank", "boot")) %>%
-  filter(Timing != "post-decon") %>%
-  ggplot(aes(Location, MPR, color = Timing)) +
+  # filter(Timing != "post-decon") %>%
+  filter(Timing == "post-sampling") %>%
+  # group_by(Location, Surface) %>%
+  # summarize(RAF = mean(RAF)) 
+  # ggplot(aes(Location, MPR, color = Timing)) +
+  ggplot(aes(Location, RAF, color = Surface)) +
   geom_boxplot(fill = NA, size = 1) +
-  stat_compare_means(
-    method = "anova",
-    label = "p.signif",
-    label.y = 6.5,
-    tip.length = 0.01,
-    size=7,
-    show.legend = FALSE
-  ) +
-  stat_compare_means(
-    method = "t.test",
-    comparisons = list(
-      c("negative site", "dump site"), 
-      c("negative site", "perimeter"), 
-      c("dump site", "perimeter")
-    ),
-    label = "p.signif",
-    label.y = c(10,9,9.5),
-    tip.length = 0.01,
-    size=7,
-    show.legend = FALSE
-  ) +
-  facet_grid(cols = vars(Surface)) +
+  # geom_col() +
+  # stat_compare_means(
+  #   method = "anova",
+  #   label = "p.signif",
+  #   # label.y = 12.5,
+  #   tip.length = 0.01,
+  #   size=7,
+  #   show.legend = FALSE
+  # ) +
+  # stat_compare_means(
+  #   method = "t.test",
+  #   comparisons = list(
+  #     c("negative site", "dump site"), 
+  #     c("negative site", "perimeter"), 
+  #     c("dump site", "perimeter")
+  #   ),
+  #   label = "p.signif",
+  #   label.y = c(10,9,9.5),
+  #   tip.length = 0.01,
+  #   size=7,
+  #   show.legend = FALSE
+  # ) +
+  # facet_grid(cols = vars(Surface)) +
   scale_color_manual(values = c("darkcyan", "darkorange", "maroon")) +
   ggtitle("Surface RAFs by Location") +
-  coord_cartesian(ylim=c(1, 12), xlim=c(0.5, 3.5), expand=FALSE) +
-  box_theme
+  scale_y_continuous(breaks=seq(0.01, 0.05, 0.01)) +
+  coord_cartesian(ylim=c(min(data$RAF), 0.05), xlim=c(0.5, 3.5), expand=FALSE) +
+  box_theme +
+  theme(
+    axis.text.x = element_text(angle=0, hjust=0.5, vjust=1),
+    plot.title = element_blank()
+  )
 ggsave("LTS_raf.png", path = "figures", width = 6, height = 8)
+
+data %>%
+  filter(Surface %in% c("blank", "boot")) %>%
+  # filter(Timing != "post-decon") %>%
+  filter(Timing == "post-sampling") %>%
+  # group_by(Location, Surface) %>%
+  # summarize(RAF = mean(RAF)) 
+  # ggplot(aes(Location, MPR, color = Timing)) +
+  ggplot(aes(Location, MPR, color = Surface)) +
+  geom_boxplot(fill = NA, size = 1) +
+  # geom_col() +
+  stat_compare_means(
+    method = "anova",
+    label = "p",
+    label.y = 16,
+    tip.length = 0.01,
+    size=5,
+    show.legend = FALSE
+  ) +
+  # stat_compare_means(
+  #   method = "t.test",
+  #   comparisons = list(
+  #     c("negative site", "dump site"), 
+  #     c("negative site", "perimeter"), 
+  #     c("dump site", "perimeter")
+  #   ),
+  #   label = "p.signif",
+  #   label.y = c(10,9,9.5),
+  #   tip.length = 0.01,
+  #   size=7,
+  #   show.legend = FALSE
+  # ) +
+  # facet_grid(cols = vars(Surface)) +
+  scale_color_manual(values = c("darkcyan", "darkorange", "maroon")) +
+  ggtitle("Surface RAFs by Location") +
+  # scale_y_continuous(breaks=seq(0.01, 0.05, 0.01)) +
+  # coord_cartesian(ylim=c(min(data$RAF), 0.05), xlim=c(0.5, 3.5), expand=FALSE) +
+  box_theme +
+  theme(
+    axis.text.x = element_text(angle=0, hjust=0.5, vjust=1),
+    plot.title = element_blank()
+  )
+ggsave("LTS_mpr.png", path = "figures", width = 6, height = 8)
 
 
 
