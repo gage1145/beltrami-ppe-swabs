@@ -48,5 +48,5 @@ df_calc <- calculate_metrics(
 
 skim(df_calc)
 
-write.csv(df_raw, "data/bird-feeder_raw.csv", row.names = FALSE)
-write.csv(df_calc, "data/bird-feeder_data.csv", row.names = FALSE)
+write.csv(df_raw, "data/bird-feeder/raw.csv", row.names = FALSE)
+write.csv(df_calc, "data/bird-feeder/data.csv", row.names = FALSE)
