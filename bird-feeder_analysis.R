@@ -1,75 +1,145 @@
 library(tidyverse)
+library(janitor)
+library(lme4)
+library(emmeans)
+library(broom)
+library(ggpubr)
 
 
 
-meta <- read.csv("data/bird-feeder/meta.csv", check.names = FALSE) %>%
-  mutate_all(as.character)
 df_ <- read.csv("data/bird-feeder/data.csv", check.names = FALSE) %>%
-  filter(Date == "11/18/2024") %>%
-  mutate(`Sample IDs` = str_remove(`Sample IDs`, " ")) %>%
-  left_join(meta, "Sample IDs") %>%
-  separate_wider_delim(ID, " ", names=c("ID", "Side", "Type"), too_few="align_start") %>%
-  rename("Months" = "Length of time in env (months)") %>%
-  mutate(Months = ordered(Months)) %>%
-  na.omit()
+  clean_names(replace = c("Sample IDs" = "sample_ids", "TtT" = "ttt"))
 
-
-
-summary <- df_ %>%
-  group_by(`Sample IDs`, ID, Side, Type, Date, Reader, Months) %>%
-  summarize_at(
-    vars(MPR:RAF),
-    c(mean, sd)
-  ) 
-  # mutate(Months = as.numeric(Months))
-
-
-df_ %>%
-  mutate_at("Months", as.factor) %>%
-  ggplot(aes(ID, RAF, fill=Months)) +
-  geom_boxplot() +
-  facet_grid(rows=vars(fct_rev(Side))) +
-  labs(
-    y="Rate of Amyloid Formation (1/s)",
-    title="Longitudinal Bird Feeder Swab RAFs"
-  ) +
-  theme(
-    axis.title.x = element_blank(),
-    plot.title = element_text(size=20, face="bold", hjust=0.5),
-    strip.text = element_text(size=16),
-    axis.title = element_text(size=16),
-    axis.text = element_text(size=12),
-    legend.title = element_text(size=16, hjust=0.5),
-    legend.text = element_text(size=12)
-    
+# SS field feeder swabs with Top/Bottom sides — main analysis dataset.
+# Plastic swabs have no side assignment and are analyzed separately below.
+df_ss <- df_ %>%
+  filter(!control, side %in% c("Top", "Bottom")) %>%
+  mutate(
+    feeder      = as.factor(feeder),
+    side        = factor(side, levels = c("Top", "Bottom")),
+    site        = factor(site, levels = c("perimeter", "dump site")),
+    reextracted = as.logical(reextracted),
+    time_in_env = as.numeric(time_in_env)
   )
-ggsave("feeder_box.png", path="figures/bird-feeder", width=12, height=8)
 
-summary %>%
-  mutate_at("Months", ~ as.numeric(as.character(.))) %>%
-  arrange(Months) %>%
-  ggplot(aes(Months, RAF_fn1, ymin=RAF_fn1 - RAF_fn2, ymax=RAF_fn1 + RAF_fn2, color=ID, group=ID)) +
-  geom_point(size=3) +
-  geom_errorbar(size=0.5) +
-  geom_path() +
-  facet_grid(cols=vars(Side)) +
-  scale_x_continuous(breaks=seq(0, 15, 3), minor_breaks = seq(0,15)) +
-  labs(
-    x="Months in Environment",
-    y="Rate of Amyloid Formation (1/s)",
-    title="Longitudinal Bird Feeder Swab RAFs"
-  ) +
-  theme(
-    # axis.title.x = element_blank(),
-    plot.title = element_text(size=20, face="bold", hjust=0.5),
-    strip.text = element_text(size=16),
-    axis.title = element_text(size=16),
-    axis.text = element_text(size=12),
-    legend.title = element_text(size=16, hjust=0.5),
-    legend.text = element_text(size=12)
-    
+
+
+# Helper: tidy pairwise contrasts for a categorical factor
+get_pairwise_comparisons <- function(factor_name, model) {
+  em <- emmeans(model, as.formula(paste("pairwise ~", factor_name)))
+  tidy(em$contrasts) %>%
+    mutate(factor = factor_name) %>%
+    {if ("adj.p.value" %in% colnames(.)) rename(., p.value = adj.p.value) else .}
+}
+
+
+
+# LME models (SS swabs) -------------------------------------------------------
+# surface is excluded: all SS swabs, and Plastic lacks side info (see below).
+# Fixed effects: time_in_env (continuous), side, reextracted (methodological covariate).
+# Random effect: feeder (repeated swabs of the same sentinel).
+# lme4 does not provide p-values for fixed effects without lmerTest;
+# use the t statistic (|t| > 2 is a common rule of thumb for significance).
+
+
+
+metrics <- c("mpr", "ms", "auc")
+
+model_list <- lapply(metrics, function(m) {
+  lmer(
+    as.formula(paste(m, "~ time_in_env + side + reextracted + site + (1 | feeder)")),
+    data = df_ss
   )
-ggsave("feeder_line.png", path="figures/bird-feeder", width=12, height=8)
-  
-  
-  
+})
+names(model_list) <- metrics
+
+# Fixed effects table
+fixed_effects <- map_dfr(metrics, function(m) {
+  coefs <- as.data.frame(coef(summary(model_list[[m]])))
+  coefs$term <- rownames(coefs)
+  rownames(coefs) <- NULL
+  coefs$metric <- m
+  coefs
+}) %>%
+  rename(estimate = Estimate, std.error = `Std. Error`, statistic = `t value`) %>%
+  mutate(significant = abs(statistic) > 2) 
+
+# Pairwise contrasts for side
+side_results <- map_dfr(metrics, function(m) {
+  get_pairwise_comparisons("side", model_list[[m]]) %>%
+    mutate(metric = m)
+})
+
+# Pairwise contrasts for reextracted
+extraction_results <- map_dfr(metrics, function(m) {
+  get_pairwise_comparisons("reextracted", model_list[[m]]) %>%
+    mutate(metric = m)
+})
+
+# Pairwise contrasts for site (perimeter vs. dump site)
+site_results <- map_dfr(metrics, function(m) {
+  get_pairwise_comparisons("site", model_list[[m]]) %>%
+    mutate(metric = m)
+})
+
+write.csv(fixed_effects, "data/bird-feeder/fixed_effects.csv", row.names = FALSE)
+write.csv(side_results, "data/bird-feeder/side_results.csv", row.names = FALSE)
+write.csv(extraction_results, "data/bird-feeder/extraction_results.csv", row.names = FALSE)
+write.csv(site_results, "data/bird-feeder/site_results.csv", row.names = FALSE)
+
+
+
+# Surface comparison (SS vs. Plastic) -----------------------------------------
+# Plastic swabs have no side data; compare as a separate Wilcoxon test.
+
+
+
+df_surface <- df_ %>%
+  filter(!control, surface %in% c("SS", "Plastic"))
+
+surface_results <- map_dfr(metrics, function(m) {
+  ss_vals  <- df_surface[[m]][df_surface$surface == "SS"]
+  pl_vals  <- df_surface[[m]][df_surface$surface == "Plastic"]
+  test <- wilcox.test(ss_vals, pl_vals, exact = FALSE)
+  data.frame(
+    metric    = m,
+    statistic = test$statistic,
+    p.value   = test$p.value,
+    n_ss      = length(ss_vals),
+    n_plastic = length(pl_vals)
+  )
+})
+
+write.csv(surface_results, "data/bird-feeder/surface_comparison.csv", row.names = FALSE)
+
+
+
+# Control vs. field comparison ------------------------------------------------
+
+
+
+df_ctrl_compare <- df_ %>%
+  filter(side %in% c("Top", "Bottom") | control)
+
+ctrl_results <- map_dfr(metrics, function(m) {
+  field_vals <- df_ctrl_compare[[m]][!df_ctrl_compare$control]
+  ctrl_vals  <- df_ctrl_compare[[m]][df_ctrl_compare$control]
+  test <- wilcox.test(field_vals, ctrl_vals, exact = FALSE)
+  data.frame(
+    metric    = m,
+    statistic = test$statistic,
+    p.value   = test$p.value,
+    n_field   = length(field_vals),
+    n_ctrl    = length(ctrl_vals)
+  )
+})
+
+write.csv(ctrl_results, "data/bird-feeder/ctrl_comparison.csv", row.names = FALSE)
+
+df_ctrl_compare %>%
+  pivot_longer(c("mpr", "ms", "auc"), names_to = "metric") %>%
+  mutate(control = ifelse(control, "Negative Site", "Positive Site")) %>%
+  ggplot(aes(control, value, fill=control)) +
+  geom_violin() +
+  stat_compare_means() +
+  facet_wrap(vars(metric), ncol=3, scales="free")

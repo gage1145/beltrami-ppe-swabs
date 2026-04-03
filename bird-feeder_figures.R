@@ -1,56 +1,50 @@
 library(tidyverse)
-library(sf)
-library(rnaturalearth)
-library(rnaturalearthhires)
-library(rnaturalearthdata)
-library(quicR)
 
 
+df_ <- read.csv("data/bird-feeder/data.csv", check.names = FALSE) %>%
+  clean_names(replace=c("Sample IDs" = "sample_ids", "TtT" = "ttt"))
 
-df_ <- read.csv("data/bird-feeder/data.csv", check.names = FALSE)
-
-# Square Format
-df_ %>%
-  filter(!is.na(Feeder) & !is.na(Side)) %>%
-  ggplot(aes(time_since_start, AUC, color = Feeder)) +
-  geom_point() +
-  facet_grid(vars(Side))
-
-local_map <- ne_download("large", "states", category="raster") %>%
-  filter(name == "Minnesota")
-
-df_map <- df_ %>%
-  filter(!is.na(Lat) & str_detect(Feeder, "ctrl", negate = TRUE))
-
-local_map %>%
-  ggplot() +
-  geom_sf(fill="lightgrey", color="black") +
-  geom_point(aes(Long, Lat, size=AUC), data = df_map)
-
-ggsave("boxplot.png", path="figures/bird-feeder", width=16, height=8)
-
-
-
-# Plate Views -------------------------------------------------------------
-
-
-
-multi_plate <- function(file) {
-  plate_view(
-    get_quic(file)
-  ) +
-    ggtitle(file)
-  ggsave(
-    paste0(
-      "figures/", 
-      str_split_i(file, "/", 2) %>% str_remove(".xlsx"), 
-      "_plate_view.png"
-    ), 
-    width = 12, 
-    height = 8
+df_sum <- df_ %>%
+  summarize(
+    across(c("mpr", "ms", "auc", "raf", "ttt"), c(mean = mean, sd = sd)),
+    n = n(),
+    .by = c(sample_ids, control, lat, long, rxn_date, reextracted, feeder, side, surface)
   )
-}
 
-sapply(list.files("raw/bird-feeder", full.names = TRUE), multi_plate)
+bkg_mpr <- mean(df_$mpr[which(df_$control)])
+bkg_ms <- mean(df_$ms[which(df_$control)])
+bkg_auc <- mean(df_$auc[which(df_$control)])
+bkg_raf <- mean(df_$raf[which(df_$control)])
 
+df_norm <- df_ %>%
+  mutate(
+    mpr = mpr - bkg_mpr,
+    ms = ms - bkg_ms,
+    auc = auc - bkg_auc,
+    raf = raf - bkg_raf
+  )
 
+df_norm %>%
+  pivot_longer(c(mpr, ms, auc, raf), names_to = "metric") %>%
+  ggplot(aes(feeder, value, fill=side)) +
+  geom_boxplot() +
+  facet_wrap(vars(metric), scales="free")
+
+df_sum %>%
+  filter(!control, lat > 47.695) %>%
+  group_by(feeder) %>%
+  ggplot(aes(long, lat, label=feeder, size=auc_mean)) +
+  # geom_point() + 
+  geom_text() +
+  theme(
+    axis.title.x = element_blank(),
+    plot.title = element_text(size=20, face="bold", hjust=0.5),
+    strip.text = element_text(size=16),
+    axis.title = element_text(size=16),
+    axis.text = element_text(size=12),
+    legend.title = element_text(size=16, hjust=0.5),
+    legend.text = element_text(size=12)
+    
+  )
+ggsave("feeder_box.png", path="figures/bird-feeder", width=12, height=8)
+ 
