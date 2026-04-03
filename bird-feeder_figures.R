@@ -3,6 +3,7 @@ library(sf)
 library(rnaturalearth)
 library(rnaturalearthhires)
 library(rnaturalearthdata)
+library(quicR)
 
 
 
