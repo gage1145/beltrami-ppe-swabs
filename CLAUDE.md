@@ -91,6 +91,3 @@ The `quicR` package computes these RT-QuIC metrics used throughout the analysis:
 - **Surface**: The surface type of the sentinel (stainless-steel or plastic)
 - **Timing**: The length of time that the sentinel in the environment.
 
-## Modeling Approach
-
-GLMs (`glm()`) are used rather than mixed-effects models (`lmer()`). The commented-out `lmer` code in `analysis.R` reflects prior experimentation — the current approach uses fixed effects only. Pairwise contrasts are extracted via `emmeans` and tidied with `broom::tidy()`.

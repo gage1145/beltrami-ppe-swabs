@@ -19,8 +19,8 @@ df_meta <- read.csv("data/bird-feeder/meta.csv", check.names=F) %>%
     site = ifelse(control, "control", ifelse(feeder %in% c("BF1", "BF2", "BF3"), "perimeter", "dump site")),
     across(c("start_date", "end_date"), ~ parse_date_time(., "my")),
     across(c("Sample IDs"), as.character),
-    time_in_env = end_date - start_date,
-    time_in_env = replace_na(time_in_env, difftime(0, 0, units="days")),
+    time_in_env = difftime(end_date, start_date, units="days"),
+    # time_in_env = replace_na(time_in_env, difftime(0, 0, units="days")),
     time_since_start = difftime(end_date, min(start_date, na.rm=TRUE), units="days")
   )
 
