@@ -7,7 +7,7 @@ library(readr)
 
 
 
-files <- list.files("raw", ".xlsx", recursive=TRUE, full.names = TRUE)
+files <- list.files("raw/ppe", ".xlsx", recursive=TRUE, full.names = TRUE)
 lists <- list(list(), list())
 
 for (file in files) {
@@ -22,7 +22,7 @@ for (file in files) {
 raw <- bind_rows(lists[[1]])
 analyzed <- bind_rows(lists[[2]])
 
-write.csv(analyzed, "data/analyzed.csv")
+write.csv(analyzed, "data/ppe/analyzed.csv")
 
 
 
@@ -30,7 +30,7 @@ write.csv(analyzed, "data/analyzed.csv")
 
 
 
-new_metadata <- read_csv("data/new_metadata.csv", name_repair="minimal") %>%
+new_metadata <- read_csv("data/ppe/new_metadata.csv", name_repair="minimal") %>%
   mutate(`Sample IDs`=as.character(`Sample IDs`)) %>%
   mutate(
     Side=na_if(Side, ""),
@@ -39,7 +39,7 @@ new_metadata <- read_csv("data/new_metadata.csv", name_repair="minimal") %>%
   relocate(c(`Sample IDs`, Technician), .before=1) %>%
   mutate_all(trimws)
 
-metadata <- read_csv("data/metadata.csv", name_repair="minimal") %>%
+metadata <- read_csv("data/ppe/metadata.csv", name_repair="minimal") %>%
   mutate(
     `Sample IDs`=str_split_i(`Process ID`, "-", 2),
     Technician=str_sub(`Field ID`, 1, 2)
@@ -83,7 +83,7 @@ metadata <- read_csv("data/metadata.csv", name_repair="minimal") %>%
   left_join(analyzed, by="Sample IDs", relationship="many-to-many") %>%
   mutate_all(trimws)
 
-write.csv(metadata, "data/updated_metadata.csv", row.names = FALSE)
+write.csv(metadata, "data/ppe/updated_metadata.csv", row.names = FALSE)
 
 
 

@@ -7,7 +7,7 @@ library(quicR)
 
 
 
-df_ <- read.csv("data/data.csv", check.names = FALSE)
+df_ <- read.csv("data/bird-feeder/data.csv", check.names = FALSE)
 
 # Square Format
 df_ %>%
@@ -25,10 +25,9 @@ df_map <- df_ %>%
 local_map %>%
   ggplot() +
   geom_sf(fill="lightgrey", color="black") +
-  geom_point(aes(Long, Lat, size=AUC), data = df_map) +
+  geom_point(aes(Long, Lat, size=AUC), data = df_map)
 
-
-ggsave("boxplot.png", path="figures", width=16, height=8)
+ggsave("boxplot.png", path="figures/bird-feeder", width=16, height=8)
 
 
 
@@ -38,8 +37,7 @@ ggsave("boxplot.png", path="figures", width=16, height=8)
 
 multi_plate <- function(file) {
   plate_view(
-    get_real(file)[[1]], 
-    get_sample_locations(file)
+    get_quic(file)
   ) +
     ggtitle(file)
   ggsave(
@@ -53,6 +51,6 @@ multi_plate <- function(file) {
   )
 }
 
-sapply(list.files("raw", full.names = TRUE), multi_plate)
+sapply(list.files("raw/bird-feeder", full.names = TRUE), multi_plate)
 
 

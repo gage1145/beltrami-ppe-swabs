@@ -2,9 +2,9 @@ library(tidyverse)
 
 
 
-meta <- read.csv("data/meta.csv", check.names = FALSE) %>%
+meta <- read.csv("data/bird-feeder/meta.csv", check.names = FALSE) %>%
   mutate_all(as.character)
-df_ <- read.csv("data/data.csv", check.names = FALSE) %>%
+df_ <- read.csv("data/bird-feeder/data.csv", check.names = FALSE) %>%
   filter(Date == "11/18/2024") %>%
   mutate(`Sample IDs` = str_remove(`Sample IDs`, " ")) %>%
   left_join(meta, "Sample IDs") %>%
@@ -43,7 +43,7 @@ df_ %>%
     legend.text = element_text(size=12)
     
   )
-ggsave("feeder_box.png", path="figures", width=12, height=8)
+ggsave("feeder_box.png", path="figures/bird-feeder", width=12, height=8)
 
 summary %>%
   mutate_at("Months", ~ as.numeric(as.character(.))) %>%
@@ -69,7 +69,7 @@ summary %>%
     legend.text = element_text(size=12)
     
   )
-ggsave("feeder_line.png", path="figures", width=12, height=8)
+ggsave("feeder_line.png", path="figures/bird-feeder", width=12, height=8)
   
   
   

@@ -8,7 +8,7 @@ library(skimr)
 
 
 
-df_meta <- read.csv("data/meta.csv", check.names=F) %>%
+df_meta <- read.csv("data/bird-feeder/meta.csv", check.names=F) %>%
   separate(ID, c("Feeder", "Side"), sep=" ", extra="merge", fill="right") %>%
   separate(Side, c("Side", "Surface"), sep=" ", extra="merge", fill="left") %>%
   separate(`Period in environment`, c("start_date", "end_date"), sep=" - ", remove=F) %>%
@@ -21,7 +21,7 @@ df_meta <- read.csv("data/meta.csv", check.names=F) %>%
     time_since_start = end_date - min(start_date, na.rm=TRUE)
   )
 
-files <- list.files("raw", full.names = TRUE)
+files <- list.files("raw/bird-feeder", full.names = TRUE)
 
 # Curation function for vectorized operation.
 get_raw <- function(file) {

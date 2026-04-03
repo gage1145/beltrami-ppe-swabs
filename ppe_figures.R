@@ -15,7 +15,7 @@ library(stringr)
 
 
 # Total Results
-results <- read.csv("data/results.csv", check.names = FALSE)
+results <- read.csv("data/ppe/results.csv", check.names = FALSE)
 results %>%
   arrange(contrast) %>%
   mutate(p.value = signif(p.value, 4)) %>%
@@ -45,10 +45,10 @@ results %>%
     legend.text = element_text(size = 12),
     legend.position = "bottom"
   )
-ggsave("results.png", path = "figures", width = 8, height = 8)
+ggsave("results.png", path = "figures/ppe", width = 8, height = 8)
 
 # Boot Results
-boot_results <- read.csv("data/boot_results.csv", check.names = FALSE)
+boot_results <- read.csv("data/ppe/boot_results.csv", check.names = FALSE)
 boot_results %>%
   filter(term != "Surface_Location") %>%
   arrange(contrast) %>%
@@ -79,11 +79,11 @@ boot_results %>%
     legend.text = element_text(size = 12),
     legend.position = "bottom"
   )
-ggsave("boot_results.png", path = "figures", width = 6, height = 8)
+ggsave("boot_results.png", path = "figures/ppe", width = 6, height = 8)
 
 
 
-data <- read.csv("data/updated_metadata.csv", check.names = FALSE) %>%
+data <- read.csv("data/ppe/updated_metadata.csv", check.names = FALSE) %>%
   mutate_at(c("Location", "Surface", "Timing"), tolower) %>%
   mutate(Timing = str_replace(Timing, " ", "-")) %>%
   filter(!is.na(Technician), `Sample Type` == "PPE Swab") %>%
@@ -98,7 +98,7 @@ data <- read.csv("data/updated_metadata.csv", check.names = FALSE) %>%
       Surface, levels = unique(Surface)
     )
   )
-results <- read.csv("data/results.csv", check.names = FALSE)
+results <- read.csv("data/ppe/results.csv", check.names = FALSE)
 
 box_theme <- theme(
   plot.title = element_text(size = 16, hjust = 0.5, face = "bold"),
@@ -140,7 +140,7 @@ data %>%
   scale_y_continuous(limits = c(0.013, 0.04)) +
   ggtitle("Surface RAFs by Location") +
   box_theme
-ggsave("TLS_raf.png", path = "figures", width = 6, height = 8)
+ggsave("TLS_raf.png", path = "figures/ppe", width = 6, height = 8)
 
 data %>%
   ggplot(aes(Timing, RAF, color = Surface)) +
@@ -150,7 +150,7 @@ data %>%
   ggtitle("Surface RAFs by Location") +
   scale_y_continuous(limits=c(0.013,0.04)) +
   box_theme
-ggsave("TSL_raf.png", path = "figures", width = 14, height = 8)
+ggsave("TSL_raf.png", path = "figures/ppe", width = 14, height = 8)
 
 data %>%
   ggplot(aes(Surface, RAF, color = Timing)) +
@@ -160,7 +160,7 @@ data %>%
   ggtitle("Surface RAFs by Location") +
   scale_y_continuous(limits=c(0.013,0.04)) +
   box_theme
-ggsave("STL_raf.png", path = "figures", width = 14, height = 8)
+ggsave("STL_raf.png", path = "figures/ppe", width = 14, height = 8)
 
 data %>%
   filter(Surface %in% c("blank", "boot")) %>%
@@ -203,7 +203,7 @@ data %>%
     axis.text.x = element_text(angle=0, hjust=0.5, vjust=1),
     plot.title = element_blank()
   )
-ggsave("LTS_raf.png", path = "figures", width = 6, height = 8)
+ggsave("LTS_raf.png", path = "figures/ppe", width = 6, height = 8)
 
 data %>%
   filter(Surface %in% c("blank", "boot")) %>%
@@ -246,7 +246,7 @@ data %>%
     axis.text.x = element_text(angle=0, hjust=0.5, vjust=1),
     plot.title = element_blank()
   )
-ggsave("LTS_mpr.png", path = "figures", width = 6, height = 8)
+ggsave("LTS_mpr.png", path = "figures/ppe", width = 6, height = 8)
 
 
 
@@ -269,12 +269,12 @@ data %>%
   scale_x_continuous(limits=c(0,10)) +
   ggtitle("Density Plots of Boot MPRs by Sample Timing") +
   density_theme
-ggsave("location_timing_density.png", path = "figures", width = 14, height = 8)
+ggsave("location_timing_density.png", path = "figures/ppe", width = 14, height = 8)
 
 
 # Surface Density Plots
 data %>%
-  filter(Timing != "post decon") %>%
+  filter(Timing != "post-decon") %>%
   arrange(Surface) %>%
   select(MPR, Surface, Location, Timing) %>%
   gather("key", "value", -c(Surface, Location, Timing)) %>%
@@ -289,7 +289,7 @@ data %>%
   density_theme
 ggsave(
   "surface_location_timing_density.png",
-  path = "figures",
+  path = "figures/ppe",
   width = 14,
   height = 8
 )
@@ -301,7 +301,7 @@ ggsave(
 
 
 # boot_data <- read.csv("data/boot_analyzed.csv", check.names = FALSE)
-results <- read.csv("data/boot_results.csv", check.names = FALSE)
+results <- read.csv("data/ppe/boot_results.csv", check.names = FALSE)
 
 
 results %>%
@@ -335,7 +335,7 @@ results %>%
     legend.text = element_text(size = 12),
     legend.position = "bottom"
   )
-ggsave("boot_results.png", path = "figures", width = 8, height = 8)
+ggsave("boot_results.png", path = "figures/ppe", width = 8, height = 8)
 
 
 
@@ -345,7 +345,7 @@ ggsave("boot_results.png", path = "figures", width = 8, height = 8)
 
 
 
-for (file in list.files(c("raw", "spike_raw"), recursive=TRUE, full.names=TRUE)) {
+for (file in list.files(c("raw/ppe", "raw/spike_raw"), recursive=TRUE, full.names=TRUE)) {
 
   file_list <- str_split(file, "/")[[1]]
   depth <- length(file_list)

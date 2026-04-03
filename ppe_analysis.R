@@ -19,12 +19,12 @@ get_pairwise_comparisons <- function(factor_name, model) {
 
 
 
-data <- read_csv("data/updated_metadata.csv", name_repair = "minimal") %>%
+data <- read_csv("data/ppe/updated_metadata.csv", name_repair = "minimal") %>%
   mutate_all(tolower) %>%
   mutate(Timing = str_replace(Timing, " ", "-")) %>%
   mutate_at(c("Sample IDs", "Technician"), as.factor) %>%
   filter(
-    !is.na(Technician), 
+    !is.na(Technician),
     `Sample Type` == "ppe swab",
     Timing != "post-decon" # Exclude post decon since it only occurs with dump site boots?
   ) %>%
@@ -112,8 +112,8 @@ results <- bind_rows(
 )
   # arrange(p.value)
 
-write.csv(data, "data/analyzed.csv", row.names = FALSE)
-write.csv(results, "data/results.csv", row.names = FALSE)
+write.csv(data, "data/ppe/analyzed.csv", row.names = FALSE)
+write.csv(results, "data/ppe/results.csv", row.names = FALSE)
 
 
 
@@ -121,7 +121,7 @@ write.csv(results, "data/results.csv", row.names = FALSE)
 
 
 
-boot_data <- read_csv("data/updated_metadata.csv", name_repair = "minimal") %>%
+boot_data <- read_csv("data/ppe/updated_metadata.csv", name_repair = "minimal") %>%
   mutate_all(tolower) %>%
   mutate(Timing = str_replace(Timing, " ", "-")) %>%
   mutate_at(c("Sample IDs", "Technician"), as.factor) %>%
@@ -162,8 +162,8 @@ boot_results <- bind_rows(
     mutate(metric = "MS")
 )
 
-write.csv(boot_data, "data/boot_analyzed.csv", row.names = FALSE)
-write.csv(boot_results, "data/boot_results.csv", row.names = FALSE)
+write.csv(boot_data, "data/ppe/boot_analyzed.csv", row.names = FALSE)
+write.csv(boot_results, "data/ppe/boot_results.csv", row.names = FALSE)
 
 
 

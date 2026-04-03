@@ -3,8 +3,8 @@ library(tidyverse)
 
 
 
-# file <- list.files("spike_raw", full.name=TRUE)[[1]]
-file <- "spike_raw/20250702_LW_BootRecovery2.xlsx"
+# file <- list.files("raw/spike_raw", full.name=TRUE)[[1]]
+file <- "raw/spike_raw/20250702_LW_BootRecovery2.xlsx"
 
 metrics <- get_quic(file) %>%
   calculate_metrics("Sample IDs", "Dilutions", "Wells") %>%
@@ -20,7 +20,7 @@ metrics %>%
     axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)
   )
 ggsave("figures/recovery_RAF.png", width=8, height=8)
-write.csv(metrics, "spike_data/metrics.csv", row.names=FALSE)
+write.csv(metrics, "data/spike_data/metrics.csv", row.names=FALSE)
 
 
 
@@ -36,7 +36,7 @@ df_sum <- metrics %>%
     median_RAF = median(RAF),
     sd_RAF = sd(RAF)
   )
-write.csv(df_sum, "spike_data/summary.csv", row.names = FALSE)
+write.csv(df_sum, "data/spike_data/summary.csv", row.names = FALSE)
 
 df_ <- metrics %>%
   filter(
@@ -93,7 +93,7 @@ predictions <- lapply(
 ) %>%
   bind_rows()
 
-write.csv(predictions, "spike_data/predictions.csv", row.names = FALSE)
+write.csv(predictions, "data/spike_data/predictions.csv", row.names = FALSE)
 
 
 
