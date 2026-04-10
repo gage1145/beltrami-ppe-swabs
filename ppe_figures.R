@@ -8,6 +8,15 @@ library(forcats)
 library(stringr)
 
 
+main_theme <- theme(
+  plot.title = element_text(size = 30, hjust = 0.5),
+  axis.title = element_text(size = 20),
+  axis.text = element_text(size = 16),
+  strip.text = element_text(size = 20),
+  legend.title = element_text(size = 20, hjust = 0.5),
+  legend.text = element_text(size = 16),
+  panel.grid = element_blank()
+)
 
 
 # Estimate Plots ----------------------------------------------------------
@@ -98,7 +107,62 @@ data <- read.csv("data/ppe/updated_metadata.csv", check.names = FALSE) %>%
       Surface, levels = unique(Surface)
     )
   )
-results <- read.csv("data/ppe/results.csv", check.names = FALSE)
+# results <- read.csv("data/ppe/results.csv", check.names = FALSE)
+
+
+
+# Principal Component Analysis -------------------------------------------
+
+
+pca_data <- data %>%
+  filter(!is.na(MPR)) %>%
+  filter(Surface == "boot")
+
+pca_res <- pca_data %>%
+  select(MPR, MS, AUC) %>%
+#   mutate(time_since_start = as.numeric(time_since_start)) %>%
+  prcomp(scale. = TRUE)
+summary(pca_res)
+
+pca_df <- pca_res$x %>%
+  as.data.frame() %>%
+  mutate(
+    Zone = pca_data$Zone,
+    Location = pca_data$Location,
+    Timing = pca_data$Timing,
+    Surface = pca_data$Surface,
+    `Surface Location` = pca_data$`Surface Location`
+  )
+
+pca_long <- pca_df %>%
+  mutate(row_id = row_number()) %>%
+  pivot_longer(starts_with("PC"), names_to = "PC", values_to = "value")
+
+pca_comp_df <- inner_join(
+  pca_long %>% rename(x_pc = PC, x_val = value),
+  pca_long %>% rename(y_pc = PC, y_val = value),
+  relationship = "many-to-many"
+) %>%
+  filter(x_pc != y_pc)
+
+pca_comp_df %>%
+  ggplot(aes(x_val, y_val, color = `Surface Location`)) +
+  geom_point() +
+#   stat_ellipse(geom="polygon", level=0.95, alpha=0.2) +
+  facet_grid(rows = vars(y_pc), cols = vars(x_pc)) +
+  # scale_color_manual(values=c("cyan", "darkorange", "darkgreen")) +
+  coord_fixed() +
+  labs(
+    x = NULL, y = NULL,
+    title = "Principal Component Pairs"
+  ) +
+  main_theme
+ggsave("pca.png", path="figures", width=12, height=12)
+
+
+# Box Plots --------------------------------------------------------------
+
+
 
 box_theme <- theme(
   plot.title = element_text(size = 16, hjust = 0.5, face = "bold"),
