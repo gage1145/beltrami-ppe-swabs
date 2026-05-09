@@ -193,38 +193,48 @@ density_theme <- theme(
 
 # comp <- wilcox.test()
 
+comps <- list(c("negative site", "perimeter"), c("negative site", "dump site"), c("perimeter", "dump site"))
+min_pc1 <- abs(min(pca_df$PC1))
 
-
-data %>%
+pca_df %>%
+  mutate(PC1 = log(PC1 + min_pc1 + 1)) %>%
   filter(Surface %in% c("blank", "boot")) %>%
-  ggplot(aes(Timing, RAF, color = Location)) +
-  geom_boxplot(fill = NA, size = 1) +
-  facet_grid(cols = vars(Surface)) +
-  scale_color_manual(values = c("darkcyan", "darkorange", "maroon")) +
-  scale_y_continuous(limits = c(0.013, 0.04)) +
-  ggtitle("Surface RAFs by Location") +
+  filter(Timing != "post-decon") %>%
+  ggplot(aes(Location, PC1)) +
+  geom_point(aes(color = PC1), size = 2, position=position_jitter(0.2)) +
+  # geom_boxplot(aes(color = Timing), fill = NA, size = 1, outlier.colour = NA) +
+  stat_compare_means(method = "wilcox.test", comparisons = comps, label = "p.signif") +
+  facet_grid(cols = vars(Timing)) +
+  scale_color_gradient(low="darkcyan", high="red") +
+  # scale_color_manual(values = c("darkcyan", "darkorange", "maroon")) +
+  # scale_y_continuous(limits = c(-1, 5)) +
+  # ggtitle("Surface PC1 by Location") +
+  labs(
+    y = sprintf("Log(PC1 + %s)", round(min_pc1, 2)),
+    color = sprintf("Log(PC1 + %s)", round(min_pc1, 2))
+  ) +
   box_theme
-ggsave("TLS_raf.png", path = "figures/ppe", width = 6, height = 8)
+ggsave("pc1_box.png", path = "figures/ppe", width = 6, height = 8)
 
-data %>%
-  ggplot(aes(Timing, RAF, color = Surface)) +
-  geom_boxplot(fill = NA, size = 1) +
-  facet_grid(cols = vars(Location)) +
-  scale_color_manual(values = c("darkcyan", "cyan3", "forestgreen", "darkorange", "maroon")) +
-  ggtitle("Surface RAFs by Location") +
-  scale_y_continuous(limits=c(0.013,0.04)) +
-  box_theme
-ggsave("TSL_raf.png", path = "figures/ppe", width = 14, height = 8)
+# data %>%
+#   ggplot(aes(Timing, RAF, color = Surface)) +
+#   geom_boxplot(fill = NA, size = 1) +
+#   facet_grid(cols = vars(Location)) +
+#   scale_color_manual(values = c("darkcyan", "cyan3", "forestgreen", "darkorange", "maroon")) +
+#   ggtitle("Surface RAFs by Location") +
+#   scale_y_continuous(limits=c(0.013,0.04)) +
+#   box_theme
+# ggsave("TSL_raf.png", path = "figures/ppe", width = 14, height = 8)
 
-data %>%
-  ggplot(aes(Surface, RAF, color = Timing)) +
-  geom_boxplot(fill = NA, size = 1) +
-  facet_grid(cols = vars(Location)) +
-  scale_color_manual(values = c("darkcyan", "darkorange", "maroon")) +
-  ggtitle("Surface RAFs by Location") +
-  scale_y_continuous(limits=c(0.013,0.04)) +
-  box_theme
-ggsave("STL_raf.png", path = "figures/ppe", width = 14, height = 8)
+# data %>%
+#   ggplot(aes(Surface, RAF, color = Timing)) +
+#   geom_boxplot(fill = NA, size = 1) +
+#   facet_grid(cols = vars(Location)) +
+#   scale_color_manual(values = c("darkcyan", "darkorange", "maroon")) +
+#   ggtitle("Surface RAFs by Location") +
+#   scale_y_continuous(limits=c(0.013,0.04)) +
+#   box_theme
+# ggsave("STL_raf.png", path = "figures/ppe", width = 14, height = 8)
 
 data %>%
   filter(Surface %in% c("blank", "boot")) %>%
@@ -334,29 +344,6 @@ data %>%
   ggtitle("Density Plots of Boot MPRs by Sample Timing") +
   density_theme
 ggsave("location_timing_density.png", path = "figures/ppe", width = 14, height = 8)
-
-
-# Surface Density Plots
-data %>%
-  filter(Timing != "post-decon") %>%
-  arrange(Surface) %>%
-  select(MPR, Surface, Location, Timing) %>%
-  gather("key", "value", -c(Surface, Location, Timing)) %>%
-  ggplot(aes(value, Location, fill = Surface)) +
-  geom_density_ridges(alpha = 0.5, linewidth = 0.75, scale = 1.2) +
-  facet_wrap(vars(key), nrow=2, scales = "free", strip.position = "right") +
-  scale_fill_manual(values = c("darkcyan", "darkred", "darkorange", "cyan")) +
-  scale_y_discrete(expand = expansion(mult = c(0.025,0.35))) +
-  scale_x_continuous(limits=c(0,10)) +
-  # scale_x_continuous(limits = c(0, 10)) +
-  ggtitle("Density Plots of Surface MPRs by Location & Timing") +
-  density_theme
-ggsave(
-  "surface_location_timing_density.png",
-  path = "figures/ppe",
-  width = 14,
-  height = 8
-)
 
 
 
