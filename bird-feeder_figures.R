@@ -24,9 +24,14 @@ main_theme <- theme(
 
 df_ <- read.csv("data/bird-feeder/data.csv", check.names = FALSE) %>%
   clean_names(replace=c("Sample IDs" = "sample_ids", "TtT" = "ttt")) %>%
-  filter(!(sample_ids %in% c("N", "P"))) %>%
+  filter(
+    !(sample_ids %in% c("N", "P")),
+    surface == "SS"
+  ) %>%
+  select(-c("dilutions", "tech", "collector", "surface")) %>%
   mutate(
-    across(c(sample_ids: tech, feeder: collector, site), as.factor),
+    across(c(mpr, ms, auc, raf, ttt), as.numeric),
+    across(c(sample_ids: reader, feeder: side, site), as.factor),
     across(start_date: end_date, as.Date),
     across(c(time_in_env, time_since_start), ~ as.difftime(., units = "days"))
   )
@@ -38,69 +43,82 @@ skim(df_)
 
 
 pca_res <- df_ %>%
-#   mutate(time_since_start = as.numeric(time_since_start)) %>%
-  prcomp(select(df_, mpr, ms, auc), scale. = TRUE)
-# summary(pca_res)
+  select(mpr, ms, auc) %>%
+  prcomp(scale. = TRUE)
+summary(pca_res)
 
-pca_df <- pca_res$x %>%
-  as.data.frame() %>%
-  mutate(
-    time_since_start = df_$time_since_start,
-    site = df_$site,
-    control = df_$control,
-    side = df_$side,
-    reextracted = df_$reextracted
-  )
+pca_df <- bind_cols(df_, pca_res$x) %>%
+  mutate(across(matches("PC"), ~ -. + max(.) + 1))
 
 pca_long <- pca_df %>%
   mutate(row_id = row_number()) %>%
-  pivot_longer(starts_with("PC"), names_to = "PC", values_to = "value")
+  pivot_longer(c("mpr", "ms", "auc", "PC1", "PC2", "PC3"), names_to = "metric", values_to = "value")
+
+# pc1_scalar <- max(pca_df$PC1) + 1
 
 pca_comp_df <- inner_join(
-  pca_long %>% rename(x_pc = PC, x_val = value),
-  pca_long %>% rename(y_pc = PC, y_val = value),
+  pca_long %>% rename(x_pc = metric, x_val = value),
+  pca_long %>% rename(y_pc = metric, y_val = value),
   relationship = "many-to-many"
 ) %>%
-  filter(x_pc != y_pc)
+  filter(x_pc != y_pc) %>%
+  arrange(x_pc, desc(y_pc))
+
+# metric_combos <- combn(unique(pca_comp_df$x_pc), 2) %>% 
+#   t() %>% 
+#   as.data.frame() %>%
+#   rename(x_pc = V1, y_pc = V2)
+
+# pca_comp_df <- right_join(pca_comp_df, metric_combos)
+
+# pca_comp_df <- pca_comp_df %>%
+#   mutate(
+#     x_val = ifelse(x_pc %in% metric_combos$x_pc & y_pc %in% metric_combos$y_pc, x_val, NA),
+#     y_val = ifelse(x_pc %in% metric_combos$x_pc & y_pc %in% metric_combos$y_pc, y_val, NA)
+#   )
 
 pca_comp_df %>%
+  filter(str_detect(x_pc, "PC") & str_detect(y_pc, "PC")) %>%
+  mutate(control = ifelse(control, "Negative Site", "Dump Site/Perimeter")) %>%
   ggplot(aes(x_val, y_val, color = site)) +
-  geom_point(size=3, alpha=0.5) +
-#   stat_ellipse(geom="polygon", level=0.95, alpha=0.2) +
-  facet_grid(rows = vars(y_pc), cols = vars(x_pc)) +
-  scale_color_manual(values=c("cyan", "darkorange", "darkgreen")) +
-  coord_fixed() +
+  geom_point(size=3, alpha=0.25) +
+  # stat_ellipse(geom="polygon", level=0.95, alpha=0.2) +
+  facet_grid(rows = vars(y_pc), cols = vars(x_pc), scales="free", switch = ("y")) +
+  scale_y_continuous(position="right") +
+  scale_color_manual(values=c("darkcyan", "red", "orange")) +
+  guides(color = guide_legend(override.aes = list(alpha = 1))) +
+  stat_ellipse() +
+  # coord_fixed() +
   labs(
     x = NULL, y = NULL,
-    title = "Principal Component Pairs"
   ) +
-  main_theme
-ggsave("pca.png", path="figures", width=12, height=12)
+  main_theme +
+  theme(
+    legend.title = element_blank(),
+    legend.position = "top"
+  )
+ggsave("pca.png", path="figures/bird-feeder", width=12, height=12.5)
 
 
 # Summary ----------------------------------------------------------------
 
 
-df_sum <- df_ %>%
+df_sum <- pca_long %>%
   summarize(
-    across(c("mpr", "ms", "auc"), mean),
+    across(c(value), mean),
     n = n(),
-    .by = c(feeder, site, side, surface, control, reextracted, time_in_env, time_since_start)
+    .by = c(metric, feeder, site, side, control, reextracted, time_in_env, time_since_start)
   ) %>%
-  filter(!control, time_in_env > 0, surface != "Plastic") %>%
-  pivot_longer(c("mpr", "ms", "auc"), names_to = "metric")
+  filter(!control, time_in_env > 0)
 
-df_neg <- df_ %>%
-  filter(control) %>%
-  pivot_longer(c("mpr", "ms", "auc"), names_to = "metric")
+df_neg <- pca_long %>%
+  filter(control)
 
 df_neg_sum <- df_neg %>%
   summarize(neg_mean = mean(value), neg_sd = sd(value), .by = metric)
 
-df_site <- df_ %>%
-  mutate(time_since_start = as.numeric(time_since_start)) %>%
-  filter(!control, time_in_env > 0, surface != "Plastic") %>%
-  pivot_longer(c("mpr", "ms", "auc"), names_to = "metric")
+df_site <- pca_long %>%
+  filter(!control, time_in_env > 0) 
 
 groupings <- expand.grid(
     m = unique(df_site$metric),
@@ -116,10 +134,12 @@ get_comps <- function(m, st, sd, tss) {
   temp_neg <- filter(df_neg, metric == m)
   value_map <- list(
     mpr = df_neg_sum$neg_mean[df_neg_sum$metric == "mpr"], 
-    ms = df_neg_sum$neg_mean[df_neg_sum$metric == "ms"], 
-    auc = df_neg_sum$neg_mean[df_neg_sum$metric == "auc"]
+    ms  = df_neg_sum$neg_mean[df_neg_sum$metric == "ms"], 
+    auc = df_neg_sum$neg_mean[df_neg_sum$metric == "auc"],
+    PC1 = df_neg_sum$neg_mean[df_neg_sum$metric == "PC1"], 
+    PC2 = df_neg_sum$neg_mean[df_neg_sum$metric == "PC2"], 
+    PC3 = df_neg_sum$neg_mean[df_neg_sum$metric == "PC3"]
   )
-#   scalar <- (st == "dump site") * 0.12 + 1
 
   tidy(wilcox.test(temp$value, temp_neg$value, alternative = "greater", exact = FALSE)) %>%
     mutate(
@@ -134,15 +154,52 @@ get_comps <- function(m, st, sd, tss) {
 }
 
 comps <- pmap_dfr(groupings, get_comps)
+fig_metric <- "PC1"
+neg_value <- df_neg_sum$neg_mean[df_neg_sum$metric == fig_metric]
 
-df_sum %>%
-  ggplot(aes(x=time_since_start, y=value, color=site, label=feeder, group=feeder)) +
-  geom_text() +
-#   geom_point() +
-  stat_smooth(method="lm", linewidth=1.5) +
-  geom_hline(aes(yintercept=neg_mean), data=df_neg_sum, linetype="dashed", linewidth=1.2) +
-  geom_label_repel(aes(time_since_start, value, label=p.value, color=site), size = 6, data=comps, inherit.aes = FALSE) +
-  facet_grid(vars(metric), vars(side), scales="free") +
+filter_for_fig <- function(df) {
+  df %>%
+  filter(
+    time_since_start > 700,
+    !control,
+    metric == fig_metric,
+    !reextracted
+  )
+}
+
+
+# PC1 vs TSS Plot --------------------------------------------------------
+
+
+mods <- pca_long %>%
+  filter_for_fig %>%
+  nest(.by = c(side, site)) %>%
+  mutate(
+    model = map(data, ~ lm(value ~ time_since_start, data = .x)),
+    # tidied = map(model, broom::tidy),
+    glanced = map(model, broom::glance)
+  ) %>%
+  unnest(c(glanced))
+write.csv(select(mods, -c(data, model)), "data/bird-feeder/tss_results.csv")
+
+pca_long %>%
+  filter_for_fig %>%
+  mutate(
+    side = factor(side, levels = c("Top", "Bottom")),
+    site = factor(site, levels = c("dump site", "perimeter"), labels = c("Dump Site", "Perimeter"))
+  ) %>%
+  ggplot(aes(x=time_since_start, y=value - neg_value)) +
+  geom_point() +
+  stat_smooth(method="lm", fill="darkcyan", color="darkcyan", linewidth=1.5) +
+  stat_cor(size=6) +
+  geom_hline(yintercept = 0, linetype="dashed", linewidth=1.2) +
+  facet_grid(vars(side), vars(site)) +
+  scale_x_continuous(breaks=seq(800, 1500, 200)) +
+  labs(
+    x = "Days Since Start",
+    y = "PC1 - mean Neg PC1"
+  ) +
+  main_theme +
   theme(
     axis.text = element_text(size=16),
     axis.title = element_text(size=20),
@@ -150,20 +207,4 @@ df_sum %>%
     legend.title = element_blank(),
     legend.text = element_text(size=16),
   )
-
-metrics <- c("mpr", "ms", "auc")
-
-get_mods <- function(x) {
-  form <- as.formula(paste(x, " ~ site * time_since_start * side"))
-  df_ <- pivot_wider(df_site, names_from = "metric", values_from = "value")
-  mod <- glm(form, data = df_)
-  tidy(mod) %>%
-    mutate(metric = x)
-}
-
-site_mods <- map_dfr(metrics, get_mods)
-# Looks like as time goes on, MPR and AUC detect a significant negative trend in activity.
-# There are no significant differences between the two sites as a whole.
-# Slopes do not diverge between sites. They have parallel slopes.
-
-# Compare against negative site.
+ggsave("pca_vs_tss.png", path="figures/bird-feeder", width=12, height=10)

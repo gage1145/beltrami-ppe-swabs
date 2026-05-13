@@ -7,6 +7,16 @@ library(skimr)
 # Metadata ---------------------------------------------------------------
 
 
+height_key <- c(
+  BF1 = 5, BF2 = 5, BF3 = 5, BF4 = 1, BF5 = 5, BF6 = 2, "PL18-1" = 0, "PL18-2" = 0
+)
+
+site_key <- c(
+  Ctrl1 = "control", Ctrl2 = "control", Ctrl3 = "control",
+  BF1   = "perimeter", BF2 = "perimeter", BF3 = "perimeter",
+  BF4   = "dump site", BF5 = "dump site", BF6 = "dump site",
+  "PL18-1" = "dump site", "PL18-2" = "dump site"
+)
 
 df_meta <- read.csv("data/bird-feeder/meta.csv", check.names=F) %>%
   filter(!is.na(`Sample IDs`)) %>%
@@ -16,12 +26,12 @@ df_meta <- read.csv("data/bird-feeder/meta.csv", check.names=F) %>%
   mutate(
     across(everything(), str_squish),
     control = str_detect(tolower(feeder), "ctrl"),
-    site = ifelse(control, "control", ifelse(feeder %in% c("BF1", "BF2", "BF3"), "perimeter", "dump site")),
+    site = site_key[feeder],
     across(c("start_date", "end_date"), ~ parse_date_time(., "my")),
     across(c("Sample IDs"), as.character),
     time_in_env = difftime(end_date, start_date, units="days"),
-    # time_in_env = replace_na(time_in_env, difftime(0, 0, units="days")),
-    time_since_start = difftime(end_date, min(start_date, na.rm=TRUE), units="days")
+    time_since_start = difftime(end_date, min(start_date, na.rm=TRUE), units="days"),
+    height = height_key[feeder]
   )
 
 files <- list.files("raw/bird-feeder", full.names = TRUE)
