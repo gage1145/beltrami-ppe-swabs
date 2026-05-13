@@ -52,14 +52,14 @@ results <- results %>%
   mutate(
     Factor = factor(Factor, levels = c("Location", "Timing", "Surface")),
     Result = ifelse(
-      p.value <= 0.001, 
-      "***", 
+      p.value <= 0.001,
+      "***",
       ifelse(
-        p.value <= 0.01, 
-        "**", 
+        p.value <= 0.01,
+        "**",
         ifelse(
-          p.value <= 0.05, 
-          "*", 
+          p.value <= 0.05,
+          "*",
           "ns"
         )
       )
@@ -67,7 +67,7 @@ results <- results %>%
     Result = factor(Result, levels = c("***", "**", "*", "ns"))
   ) %>%
   arrange(Factor, p.value) %>%
-  mutate_if(is.numeric, ~signif(., 4))
+  mutate_if(is.numeric, ~ signif(., 4))
 ```
 
 ```{r MPR table, echo=FALSE}

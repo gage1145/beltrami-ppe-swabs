@@ -3,7 +3,6 @@ library(quicR)
 library(skimr)
 
 
-
 # Metadata ---------------------------------------------------------------
 
 
@@ -13,24 +12,24 @@ height_key <- c(
 
 site_key <- c(
   Ctrl1 = "control", Ctrl2 = "control", Ctrl3 = "control",
-  BF1   = "perimeter", BF2 = "perimeter", BF3 = "perimeter",
-  BF4   = "dump site", BF5 = "dump site", BF6 = "dump site",
+  BF1 = "perimeter", BF2 = "perimeter", BF3 = "perimeter",
+  BF4 = "dump site", BF5 = "dump site", BF6 = "dump site",
   "PL18-1" = "dump site", "PL18-2" = "dump site"
 )
 
-df_meta <- read.csv("data/bird-feeder/meta.csv", check.names=F) %>%
+df_meta <- read.csv("data/bird-feeder/meta.csv", check.names = F) %>%
   filter(!is.na(`Sample IDs`)) %>%
-  separate(ID, c("feeder", "side"), sep=" ", extra="merge", fill="right") %>%
-  separate(side, c("side", "surface"), sep=" ", extra="merge", fill="left") %>%
-  separate(`Period in environment`, c("start_date", "end_date"), sep=" - ", remove=F) %>%
+  separate(ID, c("feeder", "side"), sep = " ", extra = "merge", fill = "right") %>%
+  separate(side, c("side", "surface"), sep = " ", extra = "merge", fill = "left") %>%
+  separate(`Period in environment`, c("start_date", "end_date"), sep = " - ", remove = F) %>%
   mutate(
     across(everything(), str_squish),
     control = str_detect(tolower(feeder), "ctrl"),
     site = site_key[feeder],
     across(c("start_date", "end_date"), ~ parse_date_time(., "my")),
     across(c("Sample IDs"), as.character),
-    time_in_env = difftime(end_date, start_date, units="days"),
-    time_since_start = difftime(end_date, min(start_date, na.rm=TRUE), units="days"),
+    time_in_env = difftime(end_date, start_date, units = "days"),
+    time_since_start = difftime(end_date, min(start_date, na.rm = TRUE), units = "days"),
     height = height_key[feeder]
   )
 

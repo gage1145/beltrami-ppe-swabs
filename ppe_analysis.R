@@ -10,13 +10,13 @@ get_pairwise_comparisons <- function(factor_name, model) {
   em <- emmeans(model, as.formula(paste("pairwise ~", factor_name)))
   tidy(em$contrasts) %>%
     mutate(Factor = factor_name) %>%
-    {if ("adj.p.value" %in% colnames(.)) rename(., p.value = adj.p.value) else .}
+    {
+      if ("adj.p.value" %in% colnames(.)) rename(., p.value = adj.p.value) else .
+    }
 }
 
 
-
 # Load in the data --------------------------------------------------------
-
 
 
 data <- read_csv("data/ppe/updated_metadata.csv", name_repair = "minimal") %>%
@@ -29,16 +29,16 @@ data <- read_csv("data/ppe/updated_metadata.csv", name_repair = "minimal") %>%
     Timing != "post-decon" # Exclude post decon since it only occurs with dump site boots?
   ) %>%
   select(c(
-    `Sample IDs`, 
-    Surface, 
-    `Surface Location`, 
-    Location, 
-    Timing, 
-    Technician, 
-    Side, 
-    MPR, 
-    MS, 
-    RAF, 
+    `Sample IDs`,
+    Surface,
+    `Surface Location`,
+    Location,
+    Timing,
+    Technician,
+    Side,
+    MPR,
+    MS,
+    RAF,
     TtT
   )) %>%
   mutate_at(c("Surface", "Location", "Timing", "Technician"), as.factor) %>%
@@ -54,15 +54,13 @@ data_sum <- data %>%
   summarise(
     count = n(),
     mean_MPR = mean(MPR),
-    mean_MS  = mean(MS),
+    mean_MS = mean(MS),
     mean_RAF = mean(RAF),
     mean_TtT = mean(TtT)
   )
 
 
-
 # Generate the models -----------------------------------------------------
-
 
 
 # model_MPR <- lmer(# Model for MPR
@@ -110,15 +108,13 @@ results <- bind_rows(
     bind_rows() %>%
     mutate(metric = "MS")
 )
-  # arrange(p.value)
+# arrange(p.value)
 
 write.csv(data, "data/ppe/analyzed.csv", row.names = FALSE)
 write.csv(results, "data/ppe/results.csv", row.names = FALSE)
 
 
-
 # Boot Analysis -----------------------------------------------------------
-
 
 
 boot_data <- read_csv("data/ppe/updated_metadata.csv", name_repair = "minimal") %>%
@@ -127,21 +123,21 @@ boot_data <- read_csv("data/ppe/updated_metadata.csv", name_repair = "minimal") 
   mutate_at(c("Sample IDs", "Technician"), as.factor) %>%
   filter(Surface == "boot", !is.na(`Surface Location`)) %>%
   select(c(
-    `Sample IDs`, 
-    Surface, 
-    `Surface Location`, 
-    Location, 
-    Timing, 
-    Technician, 
-    Side, 
-    MPR, 
-    MS, 
-    RAF, 
+    `Sample IDs`,
+    Surface,
+    `Surface Location`,
+    Location,
+    Timing,
+    Technician,
+    Side,
+    MPR,
+    MS,
+    RAF,
     TtT
   )) %>%
   mutate_at(c("Surface", "Location", "Timing", "Technician"), as.factor) %>%
   mutate_at(c("MPR", "MS", "RAF", "TtT"), as.numeric) %>%
-  rename_with(~str_replace(., " ", "_")) %>% 
+  rename_with(~ str_replace(., " ", "_")) %>%
   mutate(
     Location = relevel(Location, "negative site"),
     Timing = relevel(Timing, "pre-sampling")
@@ -164,6 +160,3 @@ boot_results <- bind_rows(
 
 write.csv(boot_data, "data/ppe/boot_analyzed.csv", row.names = FALSE)
 write.csv(boot_results, "data/ppe/boot_results.csv", row.names = FALSE)
-
-
-

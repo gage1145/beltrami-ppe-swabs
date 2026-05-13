@@ -6,7 +6,6 @@ library(broom)
 library(ggpubr)
 
 
-
 df_ <- read.csv("data/bird-feeder/data.csv", check.names = FALSE) %>%
   clean_names(replace = c("Sample IDs" = "sample_ids", "TtT" = "ttt"))
 
@@ -23,15 +22,15 @@ df_ss <- df_ %>%
   )
 
 
-
 # Helper: tidy pairwise contrasts for a categorical factor
 get_pairwise_comparisons <- function(factor_name, model) {
   em <- emmeans(model, as.formula(paste("pairwise ~", factor_name)))
   tidy(em$contrasts) %>%
     mutate(factor = factor_name) %>%
-    {if ("adj.p.value" %in% colnames(.)) rename(., p.value = adj.p.value) else .}
+    {
+      if ("adj.p.value" %in% colnames(.)) rename(., p.value = adj.p.value) else .
+    }
 }
-
 
 
 # LME models (SS swabs) -------------------------------------------------------
@@ -40,7 +39,6 @@ get_pairwise_comparisons <- function(factor_name, model) {
 # Random effect: feeder (repeated swabs of the same sentinel).
 # lme4 does not provide p-values for fixed effects without lmerTest;
 # use the t statistic (|t| > 2 is a common rule of thumb for significance).
-
 
 
 metrics <- c("mpr", "ms", "auc")
@@ -62,7 +60,7 @@ fixed_effects <- map_dfr(metrics, function(m) {
   coefs
 }) %>%
   rename(estimate = Estimate, std.error = `Std. Error`, statistic = `t value`) %>%
-  mutate(significant = abs(statistic) > 2) 
+  mutate(significant = abs(statistic) > 2)
 
 # Pairwise contrasts for side
 side_results <- map_dfr(metrics, function(m) {
@@ -88,18 +86,16 @@ write.csv(extraction_results, "data/bird-feeder/extraction_results.csv", row.nam
 write.csv(site_results, "data/bird-feeder/site_results.csv", row.names = FALSE)
 
 
-
 # Surface comparison (SS vs. Plastic) -----------------------------------------
 # Plastic swabs have no side data; compare as a separate Wilcoxon test.
-
 
 
 df_surface <- df_ %>%
   filter(!control, surface %in% c("SS", "Plastic"))
 
 surface_results <- map_dfr(metrics, function(m) {
-  ss_vals  <- df_surface[[m]][df_surface$surface == "SS"]
-  pl_vals  <- df_surface[[m]][df_surface$surface == "Plastic"]
+  ss_vals <- df_surface[[m]][df_surface$surface == "SS"]
+  pl_vals <- df_surface[[m]][df_surface$surface == "Plastic"]
   test <- wilcox.test(ss_vals, pl_vals, exact = FALSE)
   data.frame(
     metric    = m,
@@ -113,9 +109,7 @@ surface_results <- map_dfr(metrics, function(m) {
 write.csv(surface_results, "data/bird-feeder/surface_comparison.csv", row.names = FALSE)
 
 
-
 # Control vs. field comparison ------------------------------------------------
-
 
 
 df_ctrl_compare <- df_ %>%
@@ -139,7 +133,7 @@ write.csv(ctrl_results, "data/bird-feeder/ctrl_comparison.csv", row.names = FALS
 df_ctrl_compare %>%
   pivot_longer(c("mpr", "ms", "auc"), names_to = "metric") %>%
   mutate(control = ifelse(control, "Negative Site", "Positive Site")) %>%
-  ggplot(aes(control, value, fill=control)) +
+  ggplot(aes(control, value, fill = control)) +
   geom_violin() +
   stat_compare_means() +
-  facet_wrap(vars(metric), ncol=3, scales="free")
+  facet_wrap(vars(metric), ncol = 3, scales = "free")
