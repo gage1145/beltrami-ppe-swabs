@@ -13,7 +13,7 @@ lists <- list(list(), list())
 for (file in files) {
   print(file)
   data <- get_quic(file)
-  calcs <- calculate_metrics(data, "Sample IDs", "Wells")
+  calcs <- calculate_metrics(data, "Sample IDs", "Wells", threshold = 3)
   
   lists[[1]] <- append(lists[[1]], list(data))
   lists[[2]] <- append(lists[[2]], list(calcs))

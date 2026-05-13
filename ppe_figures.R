@@ -3,6 +3,7 @@ library(ggplot2)
 library(ggpubr)
 library(quicR)
 library(ggridges)
+library(ggpointdensity)
 library(readr)
 library(forcats)
 library(stringr)
@@ -157,7 +158,7 @@ pca_comp_df %>%
     title = "Principal Component Pairs"
   ) +
   main_theme
-ggsave("pca.png", path="figures", width=12, height=12)
+ggsave("pca.png", path="figures/ppe", width=12, height=12)
 
 
 # Box Plots --------------------------------------------------------------
@@ -194,47 +195,65 @@ density_theme <- theme(
 # comp <- wilcox.test()
 
 comps <- list(c("negative site", "perimeter"), c("negative site", "dump site"), c("perimeter", "dump site"))
-min_pc1 <- abs(min(pca_df$PC1))
+pc1_scalar <- abs(min(pca_df$PC1)) + 1
 
-pca_df %>%
-  mutate(PC1 = log(PC1 + min_pc1 + 1)) %>%
+pca_prepped <- pca_df %>%
+  mutate(PC1 = log(PC1 + pc1_scalar)) %>%
   filter(Surface %in% c("blank", "boot")) %>%
-  filter(Timing != "post-decon") %>%
-  ggplot(aes(Location, PC1)) +
-  geom_point(aes(color = PC1), size = 2, position=position_jitter(0.2)) +
-  # geom_boxplot(aes(color = Timing), fill = NA, size = 1, outlier.colour = NA) +
-  stat_compare_means(method = "wilcox.test", comparisons = comps, label = "p.signif") +
-  facet_grid(cols = vars(Timing)) +
-  scale_color_gradient(low="darkcyan", high="red") +
-  # scale_color_manual(values = c("darkcyan", "darkorange", "maroon")) +
-  # scale_y_continuous(limits = c(-1, 5)) +
-  # ggtitle("Surface PC1 by Location") +
+  filter(Timing != "post-decon") 
+
+# Timing Boxplot
+pca_prepped %>%
+  ggplot(aes(Location, PC1, fill=Timing)) +
+  geom_boxplot() +
+  stat_compare_means(
+    color = c("red", "red", "black"),
+    method = "wilcox.test", method.args = list(alternative = "greater"),
+    label.y.npc=0.95,
+    label = "p", size=6, show.legend = FALSE
+  ) +
+  scale_fill_manual(values = c("darkcyan", "darkorange", "maroon")) +
+  scale_y_continuous(limits=c(0, 3.7)) +
   labs(
     y = sprintf("Log(PC1 + %s)", round(min_pc1, 2)),
-    color = sprintf("Log(PC1 + %s)", round(min_pc1, 2))
   ) +
-  box_theme
-ggsave("pc1_box.png", path = "figures/ppe", width = 6, height = 8)
+  guides(color = guide_legend(override.aes = list(alpha = 1))) +
+  main_theme +
+  theme(
+    legend.title = element_blank(),
+    legend.position = "top",
+    axis.title.x = element_blank()
+  )
+ggsave("timing_box.png", path = "figures/ppe", width = 6, height = 8)
 
-# data %>%
-#   ggplot(aes(Timing, RAF, color = Surface)) +
-#   geom_boxplot(fill = NA, size = 1) +
-#   facet_grid(cols = vars(Location)) +
-#   scale_color_manual(values = c("darkcyan", "cyan3", "forestgreen", "darkorange", "maroon")) +
-#   ggtitle("Surface RAFs by Location") +
-#   scale_y_continuous(limits=c(0.013,0.04)) +
-#   box_theme
-# ggsave("TSL_raf.png", path = "figures/ppe", width = 14, height = 8)
+# Location Boxplot
+pca_prepped %>%
+  ggplot(aes(Location, PC1, fill=Timing, group=Location)) +
+  geom_boxplot() +
+  stat_compare_means(
+    aes(color = ifelse(after_stat(p.value) < 0.05, "red", "black")),
+    label.y = c(3, 3.4, 3.2),
+    method = "wilcox.test", method.args = list(alternative = "less"),
+    comparisons = comps, label = "p", ref.group = "negative site",
+    bracket.size = 0.5, size=6, show.legend = FALSE,
+  ) +
+  scale_y_continuous(limits=c(0, 3.7)) +
+  scale_fill_manual(values = c("darkcyan", "darkorange", "maroon")) +
+  facet_grid(cols = vars(Timing)) +
+  labs(
+    y = sprintf("Log(PC1 + %s)", round(min_pc1, 2)),
+  ) +
+  guides(color = guide_legend(override.aes = list(alpha = 1))) +
+  main_theme +
+  theme(
+    legend.title = element_blank(),
+    legend.position = "top",
+    axis.title.x = element_blank(),
+    strip.background = element_blank(), 
+    strip.text = element_blank()
+  )
+ggsave("location_box.png", path = "figures/ppe", width = 10, height = 8)
 
-# data %>%
-#   ggplot(aes(Surface, RAF, color = Timing)) +
-#   geom_boxplot(fill = NA, size = 1) +
-#   facet_grid(cols = vars(Location)) +
-#   scale_color_manual(values = c("darkcyan", "darkorange", "maroon")) +
-#   ggtitle("Surface RAFs by Location") +
-#   scale_y_continuous(limits=c(0.013,0.04)) +
-#   box_theme
-# ggsave("STL_raf.png", path = "figures/ppe", width = 14, height = 8)
 
 data %>%
   filter(Surface %in% c("blank", "boot")) %>%
