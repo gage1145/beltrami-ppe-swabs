@@ -1,3 +1,5 @@
+library(purrr)
+
 scripts <- pmap(
   list(pattern = c("curate.R", "analysis.R", "figures.R")),
   list.files
