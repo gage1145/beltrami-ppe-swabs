@@ -91,10 +91,13 @@ boot_results %>%
 ggsave("boot_results.png", path = "figures/ppe", width = 6, height = 8)
 
 
-data <- read.csv("data/ppe/updated_metadata.csv", check.names = FALSE) %>%
+# Metric Correlations ----------------------------------------------------
+
+
+data <- read.csv("data/ppe/boot_analyzed.csv", check.names = FALSE) %>%
   mutate_at(c("Location", "Surface", "Timing"), tolower) %>%
   mutate(Timing = str_replace(Timing, " ", "-")) %>%
-  filter(!is.na(Technician), `Sample Type` == "PPE Swab") %>%
+  # filter(!is.na(Technician), `Sample_Type` == "PPE Swab") %>%
   mutate(
     Timing = factor(
       Timing,
@@ -104,20 +107,40 @@ data <- read.csv("data/ppe/updated_metadata.csv", check.names = FALSE) %>%
       Location,
       levels = c("negative site", "perimeter", "dump site")
     ),
-    Surface = factor(
-      Surface,
-      levels = unique(Surface)
-    )
+    Surface = as.factor(Surface),
+    `Surface_Location` = as.factor(tolower(`Surface_Location`))
   )
-# results <- read.csv("data/ppe/results.csv", check.names = FALSE)
+
+metric_combos <- as.data.frame(t(combn(c("MPR", "MS", "AUC"), 2)))
+colnames(metric_combos) <- c("x", "y")
+
+make_cor_plot <- function(x, y) {
+  data %>%
+    ggplot(aes(x = .data[[x]], y = .data[[y]])) +
+    geom_point(color = "purple", alpha = 0.2) +
+    stat_smooth(method = "lm", color = "darkorange") +
+    stat_cor(
+      aes(label = paste(after_stat(rr.label), after_stat(p.label), sep = "~','~")),
+      label.y.npc = 1, size = 6
+    ) +
+    labs(
+      x = toupper(x),
+      y = toupper(y)
+    ) +
+    main_theme
+}
+
+cor_plots <- pmap(metric_combos, make_cor_plot)
+ggarrange(plotlist = cor_plots, ncol = 3, align = "hv")
+ggsave("corplot.png", path = "figures/ppe", width = 12, height = 8)
 
 
 # Principal Component Analysis -------------------------------------------
 
 
 pca_data <- data %>%
-  filter(!is.na(MPR)) %>%
-  filter(Surface == "boot")
+  filter(!is.na(MPR)) 
+  # filter(Surface == "boot")
 
 pca_res <- pca_data %>%
   select(MPR, MS, AUC) %>%
@@ -132,7 +155,7 @@ pca_df <- pca_res$x %>%
     Location = pca_data$Location,
     Timing = pca_data$Timing,
     Surface = pca_data$Surface,
-    `Surface Location` = pca_data$`Surface Location`
+    `Surface_Location` = pca_data$`Surface_Location`
   )
 
 pca_long <- pca_df %>%
@@ -147,7 +170,7 @@ pca_comp_df <- inner_join(
   filter(x_pc != y_pc)
 
 pca_comp_df %>%
-  ggplot(aes(x_val, y_val, color = `Surface Location`)) +
+  ggplot(aes(x_val, y_val, color = `Surface_Location`)) +
   geom_point() +
   #   stat_ellipse(geom="polygon", level=0.95, alpha=0.2) +
   facet_grid(rows = vars(y_pc), cols = vars(x_pc)) +
@@ -205,7 +228,7 @@ pca_prepped %>%
   ggplot(aes(Location, PC1, fill = Timing)) +
   geom_boxplot() +
   stat_compare_means(
-    color = c("red", "red", "black"),
+    # color = c("red", "black", "black"),
     method = "wilcox.test", method.args = list(alternative = "greater"),
     label.y.npc = 0.95,
     label = "p", size = 6, show.legend = FALSE
@@ -213,7 +236,7 @@ pca_prepped %>%
   scale_fill_manual(values = c("darkcyan", "darkorange", "maroon")) +
   scale_y_continuous(limits = c(0, 3.7)) +
   labs(
-    y = sprintf("Log(PC1 + %s)", round(min_pc1, 2)),
+    y = sprintf("Log(PC1 + %s)", round(pc1_scalar, 2)),
   ) +
   guides(color = guide_legend(override.aes = list(alpha = 1))) +
   main_theme +
@@ -229,7 +252,6 @@ pca_prepped %>%
   ggplot(aes(Location, PC1, fill = Timing, group = Location)) +
   geom_boxplot() +
   stat_compare_means(
-    aes(color = ifelse(after_stat(p.value) < 0.05, "red", "black")),
     label.y = c(3, 3.4, 3.2),
     method = "wilcox.test", method.args = list(alternative = "less"),
     comparisons = comps, label = "p", ref.group = "negative site",
@@ -239,7 +261,7 @@ pca_prepped %>%
   scale_fill_manual(values = c("darkcyan", "darkorange", "maroon")) +
   facet_grid(cols = vars(Timing)) +
   labs(
-    y = sprintf("Log(PC1 + %s)", round(min_pc1, 2)),
+    y = sprintf("Log(PC1 + %s)", round(pc1_scalar, 2)),
   ) +
   guides(color = guide_legend(override.aes = list(alpha = 1))) +
   main_theme +
@@ -252,112 +274,50 @@ pca_prepped %>%
   )
 ggsave("location_box.png", path = "figures/ppe", width = 10, height = 8)
 
-
-data %>%
-  filter(Surface %in% c("blank", "boot")) %>%
-  # filter(Timing != "post-decon") %>%
-  filter(Timing == "post-sampling") %>%
-  # group_by(Location, Surface) %>%
-  # summarize(RAF = mean(RAF))
-  # ggplot(aes(Location, MPR, color = Timing)) +
-  ggplot(aes(Location, RAF, color = Surface)) +
-  geom_boxplot(fill = NA, size = 1) +
-  # geom_col() +
-  # stat_compare_means(
-  #   method = "anova",
-  #   label = "p.signif",
-  #   # label.y = 12.5,
-  #   tip.length = 0.01,
-  #   size=7,
-  #   show.legend = FALSE
-  # ) +
-  # stat_compare_means(
-  #   method = "t.test",
-  #   comparisons = list(
-  #     c("negative site", "dump site"),
-  #     c("negative site", "perimeter"),
-  #     c("dump site", "perimeter")
-  #   ),
-  #   label = "p.signif",
-  #   label.y = c(10,9,9.5),
-  #   tip.length = 0.01,
-  #   size=7,
-  #   show.legend = FALSE
-  # ) +
-  # facet_grid(cols = vars(Surface)) +
-  scale_color_manual(values = c("darkcyan", "darkorange", "maroon")) +
-  ggtitle("Surface RAFs by Location") +
-  scale_y_continuous(breaks = seq(0.01, 0.05, 0.01)) +
-  coord_cartesian(ylim = c(min(data$RAF), 0.05), xlim = c(0.5, 3.5), expand = FALSE) +
-  box_theme +
-  theme(
-    axis.text.x = element_text(angle = 0, hjust = 0.5, vjust = 1),
-    plot.title = element_blank()
-  )
-ggsave("LTS_raf.png", path = "figures/ppe", width = 6, height = 8)
-
-data %>%
-  filter(Surface %in% c("blank", "boot")) %>%
-  # filter(Timing != "post-decon") %>%
-  filter(Timing == "post-sampling") %>%
-  # group_by(Location, Surface) %>%
-  # summarize(RAF = mean(RAF))
-  # ggplot(aes(Location, MPR, color = Timing)) +
-  ggplot(aes(Location, MPR, color = Surface)) +
-  geom_boxplot(fill = NA, size = 1) +
-  # geom_col() +
+# Side Boxplot
+sl_comps <- list(c("bottom", "top"))
+pca_prepped %>%
+  filter(!is.na(`Surface_Location`)) %>%
+  ggplot(aes(`Surface_Location`, PC1, fill = Timing, group=`Surface_Location`)) +
+  geom_boxplot() +
   stat_compare_means(
-    method = "anova",
-    label = "p",
-    label.y = 16,
-    tip.length = 0.01,
-    size = 5,
-    show.legend = FALSE
+    label.y = c(3, 3.4, 3.2),
+    method = "wilcox.test",
+    comparisons = sl_comps, label = "p",
+    bracket.size = 0.5, size = 6, show.legend = FALSE,
   ) +
-  # stat_compare_means(
-  #   method = "t.test",
-  #   comparisons = list(
-  #     c("negative site", "dump site"),
-  #     c("negative site", "perimeter"),
-  #     c("dump site", "perimeter")
-  #   ),
-  #   label = "p.signif",
-  #   label.y = c(10,9,9.5),
-  #   tip.length = 0.01,
-  #   size=7,
-  #   show.legend = FALSE
-  # ) +
-  # facet_grid(cols = vars(Surface)) +
-  scale_color_manual(values = c("darkcyan", "darkorange", "maroon")) +
-  ggtitle("Surface RAFs by Location") +
-  # scale_y_continuous(breaks=seq(0.01, 0.05, 0.01)) +
-  # coord_cartesian(ylim=c(min(data$RAF), 0.05), xlim=c(0.5, 3.5), expand=FALSE) +
-  box_theme +
+  scale_y_continuous(limits = c(0, 3.7)) +
+  scale_fill_manual(values = c("darkcyan", "darkorange", "maroon")) +
+  facet_grid(cols = vars(Timing)) +
+  labs(
+    y = sprintf("Log(PC1 + %s)", round(pc1_scalar, 2)),
+  ) +
+  guides(color = guide_legend(override.aes = list(alpha = 1))) +
+  main_theme +
   theme(
-    axis.text.x = element_text(angle = 0, hjust = 0.5, vjust = 1),
-    plot.title = element_blank()
+    legend.title = element_blank(),
+    legend.position = "top",
+    axis.title.x = element_blank(),
+    strip.background = element_blank(),
+    strip.text = element_blank()
   )
-ggsave("LTS_mpr.png", path = "figures/ppe", width = 6, height = 8)
+ggsave("surface-location_box.png", path = "figures/ppe", width = 10, height = 8)
 
 
 # Density Plots -----------------------------------------------------------
 
 
-# Surface Density Plots
-data %>%
-  arrange(Location) %>%
-  filter(Timing != "post-decon") %>%
-  filter(Surface == "boot") %>%
-  select(MPR, Location, Timing) %>%
-  gather("key", "value", -c(Location, Timing)) %>%
-  ggplot(aes(value, Location, fill = Timing)) +
+pca_prepped %>%
+  ggplot(aes(PC1, Location, fill = Timing)) +
   geom_density_ridges(alpha = 0.5, scale = 1.2) +
-  facet_wrap(vars(key), nrow = 2, scales = "free", strip.position = "right") +
-  scale_fill_manual(values = c("darkcyan", "darkred", "darkorange")) +
+  scale_fill_manual(values = c("darkcyan", "darkorange", "red")) +
   scale_y_discrete(expand = expansion(mult = c(0.025, 0.5))) +
-  scale_x_continuous(limits = c(0, 10)) +
-  ggtitle("Density Plots of Boot MPRs by Sample Timing") +
-  density_theme
+  main_theme +
+  theme(
+    legend.position = "top",
+    legend.title = element_blank(),
+    axis.title.y = element_blank()
+  )
 ggsave("location_timing_density.png", path = "figures/ppe", width = 14, height = 8)
 
 

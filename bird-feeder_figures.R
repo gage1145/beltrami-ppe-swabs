@@ -208,3 +208,60 @@ pca_long %>%
     legend.text = element_text(size = 16),
   )
 ggsave("pca_vs_tss.png", path = "figures/bird-feeder", width = 12, height = 10)
+
+
+# Plots by plate ---------------------------------------------------------
+
+
+pca_plates <- pca_df %>%
+  filter(
+    str_detect(feeder, "BF"),
+    time_in_env > 0
+  ) %>%
+  mutate(
+    year = as.factor(year(end_date)),
+    proximity = ifelse(feeder %in% paste0("BF", seq(1,3)), "dump site", "perimeter")
+  ) 
+
+plate_sum <- pca_plates %>%
+  summarize(
+    across(PC1, c(mean=mean, stdev=sd)),
+    .by = c(feeder, year, proximity)
+  )
+
+prox_sum <- plate_sum %>%
+  summarize(
+    stack_top = sum(PC1_mean),
+    .by = c(year, proximity)
+  ) %>%
+  left_join(
+    pca_plates %>%
+      summarize(PC1_stdev = sd(PC1), .by = c(year, proximity)),
+    by = c("year", "proximity")
+  )
+
+plate_sum %>%
+  ggplot(aes(proximity, PC1_mean, fill=feeder, group=proximity)) +
+  geom_col() +
+  geom_errorbar(
+    aes(proximity, stack_top, ymin=stack_top - PC1_stdev, ymax=stack_top + PC1_stdev, group=proximity),
+    data=prox_sum, inherit.aes = FALSE, position = position_dodge(0.9), width=0.2
+  ) +
+  stat_compare_means(
+    aes(proximity, PC1),
+    data = pca_plates,
+    method = "wilcox.test",
+    label.y.npc = 0.95,
+    label = "p.format", size = 6, show.legend = FALSE
+  ) +
+  facet_grid(cols=vars(year)) +
+  labs(
+    y="PC1"
+  ) +
+  scale_fill_manual(values=c("cyan4", "cyan3", "cyan2", "orange4", "orange3", "orange2")) +
+  main_theme +
+  theme(
+    axis.title.x = element_blank(),
+    legend.title = element_blank()
+  )
+ggsave("plate_cols.png", path="figures/bird-feeder", width=12, height=10)

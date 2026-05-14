@@ -119,29 +119,24 @@ write.csv(results, "data/ppe/results.csv", row.names = FALSE)
 
 boot_data <- read_csv("data/ppe/updated_metadata.csv", name_repair = "minimal") %>%
   mutate_all(tolower) %>%
-  mutate(Timing = str_replace(Timing, " ", "-")) %>%
-  mutate_at(c("Sample IDs", "Technician"), as.factor) %>%
   filter(Surface == "boot", !is.na(`Surface Location`)) %>%
   select(c(
     `Sample IDs`,
-    Surface,
-    `Surface Location`,
-    Location,
-    Timing,
-    Technician,
-    Side,
-    MPR,
-    MS,
-    RAF,
-    TtT
+    Surface, `Surface Location`, Side,
+    Location, Timing, Technician,
+    MPR, MS, RAF, TtT, AUC
   )) %>%
-  mutate_at(c("Surface", "Location", "Timing", "Technician"), as.factor) %>%
-  mutate_at(c("MPR", "MS", "RAF", "TtT"), as.numeric) %>%
-  rename_with(~ str_replace(., " ", "_")) %>%
   mutate(
+    Timing = str_replace(Timing, " ", "-"),
+    `Surface Location` = ifelse(`Surface Location` != "bottom", "top", `Surface Location`),
+    across(c("Sample IDs", "Technician", "Surface", "Surface Location", "Side", "Location", "Timing"), as.factor),
+    across(c("MPR", "MS", "RAF", "TtT"), as.numeric),
     Location = relevel(Location, "negative site"),
-    Timing = relevel(Timing, "pre-sampling")
-  )
+    # Timing = relevel(Timing, "pre-sampling")
+  ) %>%
+  # mutate_at(c("Surface", "Location", "Timing", "Technician"), as.factor) %>%
+  # mutate_at(c("MPR", "MS", "RAF", "TtT"), as.numeric) %>%
+  rename_with(~ str_replace(., " ", "_"))
 
 model_MPR <- glm(MPR ~ Surface_Location + Location + Timing, data = boot_data)
 model_MS <- glm(MS ~ Surface_Location + Location + Timing, data = boot_data)
@@ -160,3 +155,10 @@ boot_results <- bind_rows(
 
 write.csv(boot_data, "data/ppe/boot_analyzed.csv", row.names = FALSE)
 write.csv(boot_results, "data/ppe/boot_results.csv", row.names = FALSE)
+
+
+
+# Tables for presentation ------------------------------------------------
+
+
+skim(boot_data)
