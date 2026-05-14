@@ -101,14 +101,20 @@ data <- read.csv("data/ppe/boot_analyzed.csv", check.names = FALSE) %>%
   mutate(
     Timing = factor(
       Timing,
-      levels = c("pre-sampling", "post-sampling", "post-decon")
+      levels = c("pre-sampling", "post-sampling", "post-decon"),
+      labels = c("Pre-sampling", "Post-sampling", "Post-decon")
     ),
     Location = factor(
       Location,
-      levels = c("negative site", "perimeter", "dump site")
+      levels = c("negative site", "perimeter", "dump site"),
+      labels = c("Negative Site", "Perimeter", "Dump Site")
     ),
     Surface = as.factor(Surface),
-    `Surface_Location` = as.factor(tolower(`Surface_Location`))
+    `Surface_Location` = factor(
+        tolower(`Surface_Location`),
+        levels = c("top", "bottom"),
+        labels = c("Top", "Bottom")
+    )
   )
 
 metric_combos <- as.data.frame(t(combn(c("MPR", "MS", "AUC"), 2)))
@@ -170,12 +176,12 @@ pca_comp_df <- inner_join(
   filter(x_pc != y_pc)
 
 pca_comp_df %>%
-  ggplot(aes(x_val, y_val, color = `Surface_Location`)) +
-  geom_point() +
+  ggplot(aes(x_val, y_val, color = Location)) +
+  geom_point(alpha=0.2, size=3) +
   #   stat_ellipse(geom="polygon", level=0.95, alpha=0.2) +
-  facet_grid(rows = vars(y_pc), cols = vars(x_pc)) +
+  facet_grid(rows = vars(y_pc), cols = vars(x_pc), scales="free") +
   # scale_color_manual(values=c("cyan", "darkorange", "darkgreen")) +
-  coord_fixed() +
+  # coord_fixed() +
   labs(
     x = NULL, y = NULL,
     title = "Principal Component Pairs"
@@ -214,27 +220,34 @@ density_theme <- theme(
 
 
 # comp <- wilcox.test()
-
-comps <- list(c("negative site", "perimeter"), c("negative site", "dump site"), c("perimeter", "dump site"))
+smpl_comps <- list(c("Pre-sampling", "Post-sampling"))
+site_comps <- list(c("Negative Site", "Perimeter"), c("Negative Site", "Dump Site"), c("Perimeter", "Dump Site"))
+sl_comps   <- list(c("Bottom", "Top"))
 pc1_scalar <- abs(min(pca_df$PC1)) + 1
 
 pca_prepped <- pca_df %>%
   mutate(PC1 = log(PC1 + pc1_scalar)) %>%
   filter(Surface %in% c("blank", "boot")) %>%
-  filter(Timing != "post-decon")
+  filter(Timing != "Post-decon")
 
 # Timing Boxplot
 pca_prepped %>%
-  ggplot(aes(Location, PC1, fill = Timing)) +
-  geom_boxplot() +
-  stat_compare_means(
-    # color = c("red", "black", "black"),
-    method = "wilcox.test", method.args = list(alternative = "greater"),
-    label.y.npc = 0.95,
-    label = "p", size = 6, show.legend = FALSE
+  ggplot(aes(Timing, PC1, fill = Timing)) +
+  geom_boxplot(show.legend=FALSE, outliers = FALSE) +
+  geom_dotplot(
+    show.legend=FALSE, binaxis="y", stackdir="center", 
+    dotsize=0.2, stackratio=0.3, color="#333", fill="#333",
+    position=position_jitter(0.01, 0.1), alpha=0.25
   ) +
+  stat_compare_means(
+    aes(group = Timing),
+    comparisons = smpl_comps,
+    method = "wilcox.test",
+    label = "p.signif", size = 6, show.legend = FALSE
+  ) +
+  facet_grid(cols=vars(Location)) +
   scale_fill_manual(values = c("darkcyan", "darkorange", "maroon")) +
-  scale_y_continuous(limits = c(0, 3.7)) +
+  scale_y_continuous(limits = c(0, 3.1)) +
   labs(
     y = sprintf("Log(PC1 + %s)", round(pc1_scalar, 2)),
   ) +
@@ -243,18 +256,23 @@ pca_prepped %>%
   theme(
     legend.title = element_blank(),
     legend.position = "top",
-    axis.title.x = element_blank()
+    axis.title.x = element_blank(),
   )
-ggsave("timing_box.png", path = "figures/ppe", width = 6, height = 8)
+ggsave("timing_box.png", path = "figures/ppe", width = 12, height = 8)
 
 # Location Boxplot
 pca_prepped %>%
   ggplot(aes(Location, PC1, fill = Timing, group = Location)) +
-  geom_boxplot() +
+  geom_boxplot(show.legend=FALSE, outliers = FALSE) +
+  geom_dotplot(
+    show.legend=FALSE, binaxis="y", stackdir="center", 
+    dotsize=0.2, stackratio=0.3, color="#333", fill="#333",
+    position=position_jitter(0.01, 0.1), alpha=0.25
+  ) +
   stat_compare_means(
     label.y = c(3, 3.4, 3.2),
     method = "wilcox.test", method.args = list(alternative = "less"),
-    comparisons = comps, label = "p", ref.group = "negative site",
+    comparisons = site_comps, label = "p.signif", ref.group = "negative site",
     bracket.size = 0.5, size = 6, show.legend = FALSE,
   ) +
   scale_y_continuous(limits = c(0, 3.7)) +
@@ -269,21 +287,23 @@ pca_prepped %>%
     legend.title = element_blank(),
     legend.position = "top",
     axis.title.x = element_blank(),
-    strip.background = element_blank(),
-    strip.text = element_blank()
   )
-ggsave("location_box.png", path = "figures/ppe", width = 10, height = 8)
+ggsave("location_box.png", path = "figures/ppe", width = 12, height = 8)
 
 # Side Boxplot
-sl_comps <- list(c("bottom", "top"))
 pca_prepped %>%
   filter(!is.na(`Surface_Location`)) %>%
   ggplot(aes(`Surface_Location`, PC1, fill = Timing, group=`Surface_Location`)) +
-  geom_boxplot() +
+  geom_boxplot(show.legend=FALSE, outliers = FALSE) +
+  geom_dotplot(
+    show.legend=FALSE, binaxis="y", stackdir="center", 
+    dotsize=0.2, stackratio=0.3, color="#333", fill="#333",
+    position=position_jitter(0.01, 0.1), alpha=0.25
+  ) +
   stat_compare_means(
     label.y = c(3, 3.4, 3.2),
     method = "wilcox.test",
-    comparisons = sl_comps, label = "p",
+    comparisons = sl_comps, label = "p.signif",
     bracket.size = 0.5, size = 6, show.legend = FALSE,
   ) +
   scale_y_continuous(limits = c(0, 3.7)) +
@@ -298,10 +318,8 @@ pca_prepped %>%
     legend.title = element_blank(),
     legend.position = "top",
     axis.title.x = element_blank(),
-    strip.background = element_blank(),
-    strip.text = element_blank()
   )
-ggsave("surface-location_box.png", path = "figures/ppe", width = 10, height = 8)
+ggsave("surface-location_box.png", path = "figures/ppe", width = 12, height = 8)
 
 
 # Density Plots -----------------------------------------------------------
