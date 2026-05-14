@@ -46,7 +46,10 @@ pca_res <- df_ %>%
 summary(pca_res)
 
 pca_df <- bind_cols(df_, pca_res$x) %>%
-  mutate(across(matches("PC"), ~ -. + max(.) + 1))
+  mutate(
+    across(matches("PC"), ~ -. + max(.) + 1),
+    year = as.factor(year(end_date)),
+  )
 
 pca_long <- pca_df %>%
   mutate(row_id = row_number()) %>%
@@ -186,17 +189,18 @@ pca_long %>%
   filter_for_fig() %>%
   mutate(
     side = factor(side, levels = c("Top", "Bottom")),
-    site = factor(site, levels = c("dump site", "perimeter"), labels = c("Dump Site", "Perimeter"))
+    site = factor(site, levels = c("dump site", "perimeter"), labels = c("Dump Site", "Perimeter")),
+    year = as.integer(as.character(year))
   ) %>%
-  ggplot(aes(x = time_since_start, y = value - neg_value)) +
+  ggplot(aes(x = year, y = value - neg_value)) +
   geom_point() +
   stat_smooth(method = "lm", fill = "darkcyan", color = "darkcyan", linewidth = 1.5) +
-  stat_cor(size = 6) +
-  geom_hline(yintercept = 0, linetype = "dashed", linewidth = 1.2) +
+  stat_cor(aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), size = 6) +
+  geom_hline(yintercept = 0, linetype = "dashed", linewidth = 1.2, color="blue") +
   facet_grid(vars(side), vars(site)) +
-  scale_x_continuous(breaks = seq(800, 1500, 200)) +
+  scale_x_continuous(breaks = seq(2023, 2025)) +
   labs(
-    x = "Days Since Start",
+    x = "Year of Sampling",
     y = "PC1 - mean Neg PC1"
   ) +
   main_theme +
@@ -219,40 +223,39 @@ pca_plates <- pca_df %>%
     time_in_env > 0
   ) %>%
   mutate(
-    year = as.factor(year(end_date)),
-    proximity = ifelse(feeder %in% paste0("BF", seq(1,3)), "dump site", "perimeter")
+    # proximity = ifelse(feeder %in% paste0("BF", seq(1,3)), "dump site", "perimeter")
   ) 
 
 plate_sum <- pca_plates %>%
   summarize(
     across(PC1, c(mean=mean, stdev=sd)),
-    .by = c(feeder, year, proximity)
+    .by = c(feeder, year, site)
   )
 
 prox_sum <- plate_sum %>%
   summarize(
     stack_top = sum(PC1_mean),
-    .by = c(year, proximity)
+    .by = c(year, site)
   ) %>%
   left_join(
     pca_plates %>%
-      summarize(PC1_stdev = sd(PC1), .by = c(year, proximity)),
-    by = c("year", "proximity")
+      summarize(PC1_stdev = sd(PC1), .by = c(year, site)),
+    by = c("year", "site")
   )
 
 plate_sum %>%
-  ggplot(aes(proximity, PC1_mean, fill=feeder, group=proximity)) +
+  ggplot(aes(site, PC1_mean, fill=feeder, group=site)) +
   geom_col() +
   geom_errorbar(
-    aes(proximity, stack_top, ymin=stack_top - PC1_stdev, ymax=stack_top + PC1_stdev, group=proximity),
+    aes(site, stack_top, ymin=stack_top - PC1_stdev, ymax=stack_top + PC1_stdev, group=site),
     data=prox_sum, inherit.aes = FALSE, position = position_dodge(0.9), width=0.2
   ) +
   stat_compare_means(
-    aes(proximity, PC1),
+    aes(site, PC1),
     data = pca_plates,
     method = "wilcox.test",
-    label.y.npc = 0.95,
-    label = "p.format", size = 6, show.legend = FALSE
+    label.y.npc = 0.95, label.x.npc=0.5,
+    label = "p.signif", size = 6, show.legend = FALSE
   ) +
   facet_grid(cols=vars(year)) +
   labs(
