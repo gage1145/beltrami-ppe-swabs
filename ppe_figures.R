@@ -97,7 +97,6 @@ ggsave("boot_results.png", path = "figures/ppe", width = 6, height = 8)
 data <- read.csv("data/ppe/boot_analyzed.csv", check.names = FALSE) %>%
   mutate_at(c("Location", "Surface", "Timing"), tolower) %>%
   mutate(Timing = str_replace(Timing, " ", "-")) %>%
-  # filter(!is.na(Technician), `Sample_Type` == "PPE Swab") %>%
   mutate(
     Timing = factor(
       Timing,
@@ -123,8 +122,8 @@ colnames(metric_combos) <- c("x", "y")
 make_cor_plot <- function(x, y) {
   data %>%
     ggplot(aes(x = .data[[x]], y = .data[[y]])) +
-    geom_point(color = "purple", alpha = 0.2) +
-    stat_smooth(method = "lm", color = "darkorange") +
+    geom_point(color="purple", alpha = 0.2) +
+    stat_smooth(method = "lm", formula = y ~ x, color = "darkorange") +
     stat_cor(
       aes(label = paste(after_stat(rr.label), after_stat(p.label), sep = "~','~")),
       label.y.npc = 1, size = 6
@@ -178,7 +177,7 @@ pca_comp_df <- inner_join(
 pca_comp_df %>%
   ggplot(aes(x_val, y_val, color = Location)) +
   geom_point(alpha=0.2, size=3) +
-  #   stat_ellipse(geom="polygon", level=0.95, alpha=0.2) +
+  stat_ellipse(geom="polygon", level=0.999, alpha=0.2) +
   facet_grid(rows = vars(y_pc), cols = vars(x_pc), scales="free") +
   # scale_color_manual(values=c("cyan", "darkorange", "darkgreen")) +
   # coord_fixed() +

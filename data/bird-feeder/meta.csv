@@ -1,22 +1,22 @@
 Sample IDs,ID,Collector,Lat,Long,Period in environment,Notes
-28,BF1 Top SS,QY,47.68608,-94.66414,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
-26,BF1 Bottom SS,QY,47.68608,-94.66414,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
-27,BF1 Plastic,QY,47.68608,-94.66414,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
-31,BF2 Top SS,QY,47.68608,-94.66414,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
-29,BF2 Bottom SS,QY,47.68608,-94.66414,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
-30,BF2 Plastic,QY,47.68608,-94.66414,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
-34,BF3 Top SS,QY,47.68608,-94.66414,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
-32,BF3 Bottom SS,QY,47.68608,-94.66414,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
-33,BF3 Plastic,QY,47.68608,-94.66414,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
-37,BF4 Top SS,QY,47.68608,-94.66414,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
-35,BF4 Bottom SS,QY,47.68608,-94.66414,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
-36,BF4 Plastic,QY,47.68608,-94.66414,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
-40,BF5 Top SS,QY,47.68608,-94.66414,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
-38,BF5 Bottom SS,QY,47.68608,-94.66414,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
-39,BF5 Plastic,QY,47.68608,-94.66414,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
-43,BF6 Top SS,QY,47.68608,-94.66414,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
-41,BF6 Bottom SS,QY,47.68608,-94.66414,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
-42,BF6 Plastic,QY,47.68608,-94.66414,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+28,BF1 Top SS,QY,47.7002,-94.65286,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+26,BF1 Bottom SS,QY,47.7002,-94.65286,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+27,BF1 Plastic,QY,47.7002,-94.65286,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+31,BF2 Top SS,QY,47.69913,-94.65035,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+29,BF2 Bottom SS,QY,47.69913,-94.65035,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+30,BF2 Plastic,QY,47.69913,-94.65035,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+34,BF3 Top SS,QY,47.69849,-94.65187,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+32,BF3 Bottom SS,QY,47.69849,-94.65187,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+33,BF3 Plastic,QY,47.69849,-94.65187,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+37,BF4 Top SS,QY,47.69935,-94.65315,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+35,BF4 Bottom SS,QY,47.69935,-94.65315,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+36,BF4 Plastic,QY,47.69935,-94.65315,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+40,BF5 Top SS,QY,47.69951,-94.65256,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+38,BF5 Bottom SS,QY,47.69951,-94.65256,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+39,BF5 Plastic,QY,47.69951,-94.65256,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+43,BF6 Top SS,QY,47.69957,-94.6523,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+41,BF6 Bottom SS,QY,47.69957,-94.6523,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+42,BF6 Plastic,QY,47.69957,-94.6523,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
 1,Ctrl1  SS,JB,47.48844,-94.47566,Aug 2023 - July 2024,"""control"" location, Bartz property"
 2,Ctrl2  SS,JB,47.48844,-94.47566,Aug 2023 - July 2024,"""control"" location, Bartz property"
 3,Ctrl3  SS,JB,47.48844,-94.47566,Aug 2023 - July 2024,"""control"" location, Bartz property"
