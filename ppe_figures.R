@@ -97,6 +97,8 @@ ggsave("boot_results.png", path = "figures/ppe", width = 6, height = 8)
 data <- read.csv("data/ppe/boot_analyzed.csv", check.names = FALSE) %>%
   mutate_at(c("Location", "Surface", "Timing"), tolower) %>%
   mutate(Timing = str_replace(Timing, " ", "-")) %>%
+  filter(Location != "perimeter") %>%
+  # filter(!is.na(Technician), `Sample_Type` == "PPE Swab") %>%
   mutate(
     Timing = factor(
       Timing,
@@ -105,8 +107,8 @@ data <- read.csv("data/ppe/boot_analyzed.csv", check.names = FALSE) %>%
     ),
     Location = factor(
       Location,
-      levels = c("negative site", "perimeter", "dump site"),
-      labels = c("Negative Site", "Perimeter", "Dump Site")
+      levels = c("negative site", "dump site"),
+      labels = c("Negative Site", "Core Site")
     ),
     Surface = as.factor(Surface),
     `Surface_Location` = factor(
@@ -220,7 +222,7 @@ density_theme <- theme(
 
 # comp <- wilcox.test()
 smpl_comps <- list(c("Pre-sampling", "Post-sampling"))
-site_comps <- list(c("Negative Site", "Perimeter"), c("Negative Site", "Dump Site"), c("Perimeter", "Dump Site"))
+site_comps <- list(c("Negative Site", "Core Site"))
 sl_comps   <- list(c("Bottom", "Top"))
 pc1_scalar <- abs(min(pca_df$PC1)) + 1
 
