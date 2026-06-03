@@ -50,13 +50,10 @@ data <- read_csv("data/ppe/updated_metadata.csv", name_repair = "minimal") %>%
   )
 
 data_sum <- data %>%
-  group_by(`Sample IDs`, Surface, `Surface Location`, Location, Timing) %>%
   summarise(
+    across(c(MPR, MS, RAF, TtT, QR), mean, .names = "{.fn}_{.col}")
     count = n(),
-    mean_MPR = mean(MPR),
-    mean_MS = mean(MS),
-    mean_RAF = mean(RAF),
-    mean_TtT = mean(TtT)
+    .by = c(`Sample IDs`, Surface, `Surface Location`, Location, Timing)
   )
 
 
