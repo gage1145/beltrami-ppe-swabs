@@ -4,22 +4,26 @@ library(stringr)
 library(ggplot2)
 library(tidyr)
 library(readr)
+library(janitor)
+
+
+# Extract the raw and calculated data. -----------------------------------
 
 
 files <- list.files("raw/ppe", ".xlsx", recursive = TRUE, full.names = TRUE)
-lists <- list(list(), list())
 
-for (file in files) {
+get_data <- function(file) {
   print(file)
   data <- get_quic(file)
-  calcs <- calculate_metrics(data, "Sample IDs", "Wells", threshold = 3, flip_ratio=TRUE)
-
-  lists[[1]] <- append(lists[[1]], list(data))
-  lists[[2]] <- append(lists[[2]], list(calcs))
+  calcs <- calculate_metrics(data, "Sample IDs", "Wells", threshold = 4, flip_ratio=TRUE)
+  return(c(list(data), list(calcs)))
 }
 
-raw <- bind_rows(lists[[1]])
-analyzed <- bind_rows(lists[[2]])
+df_list <- lapply(files, get_data)
+raw <- map_dfr(df_list, ~ .[[1]]) %>%
+  clean_names(replace=c("Sample IDs"="sample_id"))
+analyzed <- map_dfr(df_list, ~ .[[2]]) %>%
+  clean_names(replace=c("Sample IDs"="sample_id", "TtT"="ttt"))
 
 write.csv(analyzed, "data/ppe/analyzed.csv")
 
@@ -28,61 +32,65 @@ write.csv(analyzed, "data/ppe/analyzed.csv")
 
 
 new_metadata <- read_csv("data/ppe/new_metadata.csv", name_repair = "minimal") %>%
+  clean_names(replace=c("Sample IDs"="sample_id")) %>%
   mutate(
-    across(where(is.character), ~ tolower(trimws(.))),
-    `Sample IDs` = as.character(`Sample IDs`),
-    Side = na_if(Side, ""),
-    Location = ifelse(is.na(Location), "dump site", Location)
-  ) %>%
-  relocate(c(`Sample IDs`, Technician), .before = 1)
+    across(where(is.character), trimws),
+    across(c(location, timing, surface, surface_location, side, sample_type), tolower),
+    sample_id = as.character(sample_id),
+    side = na_if(side, ""),
+    location = ifelse(is.na(location), "dump site", location)
+  ) 
+  # relocate(c(sample_id, technician), .before = 1)
 
 metadata <- read_csv("data/ppe/metadata.csv", name_repair = "minimal") %>%
+  clean_names(replace=c("Sample IDs"="sample_id")) %>%
   mutate(
-    across(where(is.character), ~ tolower(trimws(.))),
-    `Sample IDs` = str_split_i(`Process ID`, "-", 2),
-    Technician = str_sub(`Field ID`, 1, 2)
+    across(where(is.character), trimws),
+    sample_id = str_split_i(process_id, "-", 2),
+    technician = str_sub(field_id, 1, 2)
   ) %>%
   separate_wider_delim(
-    Comment,
+    comment,
     "; ",
-    names = c("Surface", "Condition"),
+    names = c("surface", "condition"),
     too_few = "align_start",
     too_many = "merge"
   ) %>%
   separate_wider_regex(
-    Condition,
-    c(Zone = "[^ ]+ [^ ]+", " ", Timing = ".*")
+    condition,
+    c(zone = "[^ ]+ [^ ]+", " ", timing = ".*")
   ) %>%
   separate_wider_delim(
-    Timing,
+    timing,
     " of ",
-    names = c("Timing", "Location"),
+    names = c("timing", "location"),
     too_few = "align_start"
   ) %>%
   separate_wider_delim(
-    Location,
+    location,
     "; ",
-    names = c("Location", "extra_note"),
+    names = c("location", "extra_note"),
     too_few = "align_start"
   ) %>%
   separate_wider_regex(
-    Surface, c(Side = "(?:left |right )?", Surface = ".*"),
+    surface, c(side = "(?:left |right )?", surface = ".*"),
     too_few = "align_start"
   ) %>%
   separate_wider_delim(
-    Surface, " ",
-    names = c("Surface", "Surface Location"), too_few = "align_start", too_many = "merge"
+    surface, " ",
+    names = c("surface", "surface_location"), too_few = "align_start", too_many = "merge"
   ) %>%
   mutate(
-    Side = na_if(Side, ""),
-    Location = ifelse(Zone == "negative site", "negative site", Location),
-    Location = ifelse(is.na(Location), "dump site", Location)
+    side = na_if(side, ""),
+    location = ifelse(zone == "negative site", "negative site", location),
+    location = ifelse(is.na(location), "dump site", location)
   ) %>%
-  relocate(c(`Sample IDs`, Technician), .before = 1) %>%
+  relocate(c(sample_id, technician), .before = 1) %>%
   bind_rows(new_metadata) %>%
-  left_join(analyzed, by = "Sample IDs", relationship = "many-to-many") %>%
+  left_join(analyzed, by = "sample_id", relationship = "many-to-many") %>%
   mutate(
-    `Surface Location` = ifelse(Surface == "boot" & `Surface Location` != "bottom", "top", `Surface Location`)
+    across(c(location, timing, surface, surface_location, side, sample_type), tolower),
+    surface_location = ifelse(surface == "boot" & surface_location != "bottom", "top", surface_location)
   )
 
 write.csv(metadata, "data/ppe/updated_metadata.csv", row.names = FALSE)
