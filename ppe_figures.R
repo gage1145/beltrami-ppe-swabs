@@ -5,6 +5,7 @@ library(quicR)
 library(ggridges)
 library(ggforce)
 library(ggpointdensity)
+library(ggpmisc)
 library(readr)
 library(emmeans)
 library(pROC)
@@ -137,23 +138,43 @@ data <- read.csv("data/ppe/updated_metadata.csv", check.names = FALSE) %>%
     )
   )
 
-metrics <- c("mpr", "ms", "auc")
+metrics <- c("ms", "mpr", "auc")
 metric_combos <- as.data.frame(t(combn(metrics, 2)))
 colnames(metric_combos) <- c("x", "y")
 
 make_cor_plot <- function(xval, yval, alpha=0.2) {
+  # form <- ifelse(xval %in% c("mpr", "ms") & yval %in% c("mpr", "ms"), "y ~ log(x)", "log(y) ~ x")
+  # lab_form <- ifelse(form == "y ~ log(x)", "exp(y) ~ x", form)
+  
+  # form <- as.formula(form)
+  # lab_form <- as.formula(lab_form)
+  eq_fmt <- "`y`~`=`~%.3g~italic(e)^{%.3g~`x`}"
+
   temp_df <- data %>%
-    filter(timing == "Post-sampling")
+    filter(timing == "Post-sampling") %>%
+    mutate(across(c(!!sym(xval), !!sym(yval)), log)) 
   cls <- temp_df %>% # Which is best at discriminating post-samples?
     select(!!sym(xval), !!sym(yval)) %>%
     kmeans(centers=2, trace=TRUE)
   temp_df %>%
     mutate(cluster=as.character(cls$cluster)) %>%
-    ggplot(aes(x = .data[[xval]], y = .data[[yval]], color=location)) +
+    ggplot(aes(x = !!sym(xval), y = !!sym(yval), color=location)) +
     stat_ellipse(aes(fill=cluster), geom="polygon", alpha=0, type="norm", color="black", show.legend = FALSE) +
     geom_point(alpha = alpha, size=3) +
-    scale_x_log10() +
-    scale_y_log10() +
+    stat_smooth(method="lm", formula=y~exp(x), color = "lightblue") +
+    # stat_cor(aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color="black") +
+    # stat_regline_equation(formula=as.formula(form), color="black") +
+    # stat_poly_line(method="glm", formula=y ~ x, color="red", method.args=list(family=gaussian(link = "log"))) +  
+    stat_poly_eq(
+      aes(label = sprintf(eq_fmt, after_stat(b_0), after_stat(b_1))), 
+      label.x = 0.1, label.y = 0.85, color = "black",
+      formula =  y ~ exp(x), 
+      output.type = "numeric",
+      parse = TRUE
+    ) +
+    stat_poly_eq(
+               aes(label = paste(..rr.label..)), formula =  y ~ exp(x),
+               parse = TRUE, size = 3.5, color = "black") +
     scale_color_manual(values=c("darkcyan", "darkorange")) +
     scale_fill_manual(values=c("darkcyan", "darkorange", "maroon")) +
     labs(
@@ -164,9 +185,9 @@ make_cor_plot <- function(xval, yval, alpha=0.2) {
 }
 
 cor_plots <- pmap(metric_combos, make_cor_plot, alpha=0.75)
-ggarrange(plotlist = cor_plots, align = "hv", ncol=3, common.legend = TRUE, legend="bottom") %>%
-  annotate_figure(top=text_grob("Metric Distributions of Post-Sampling Boot Swabs", size=32))
-ggsave("corplot.png", path = "figures/ppe", width = 12, height = 8)
+ggarrange(plotlist = cor_plots, align = "hv", ncol=3, common.legend = TRUE, legend="bottom") 
+  # annotate_figure(top=text_grob("Metric Distributions of Post-Sampling Boot Swabs", size=32))
+ggsave("corplot.png", path = "figures/ppe", width = 16, height = 8)
 
 data %>%
   pivot_longer(c(mpr, ms, auc, qr), names_to = "metric") %>%
@@ -209,6 +230,8 @@ make_pca_plot <- function(x, y, alpha=0.5) {
     geom_point(alpha = alpha, size=3) +
     scale_color_manual(values=c("darkcyan", "darkorange")) +
     scale_fill_manual(values=c("darkcyan", "darkorange")) +
+    scale_y_continuous(limits=c(-2, 6)) +
+    scale_x_continuous(limits=c(-2, 6)) +
     coord_fixed() +
     labs(
       x = toupper(x),
@@ -221,9 +244,10 @@ pca_combos <- as.data.frame(t(combn(paste0("PC", seq(length(pca_res$scale))), 2)
 colnames(pca_combos) <- c("x", "y")
 
 pca_plots <- pmap(pca_combos, make_pca_plot)
-ggarrange(plotlist = pca_plots, align = "hv", ncol=1, common.legend = TRUE, legend="bottom") %>%
-  annotate_figure(top=text_grob("PCA Distributions of Post-Sampling Boot Swabs", size=24))
-ggsave("pca_plot.png", path="figures/ppe", width=8, height=12)
+ggarrange(plotlist = pca_plots, align = "hv", ncol=3, common.legend = TRUE, legend="bottom") 
+  # annotate_figure(top=text_grob("PCA Distributions of Post-Sampling Boot Swabs", size=24))
+ggsave("pca_plot.png", path="figures/ppe", width = 12, height = 5)
+gg
 
 pca_long <- pca_df %>%
   pivot_longer(c(mpr, ms, auc, PC1, PC2, PC3), names_to="metric") %>%
