@@ -10,6 +10,7 @@ library(readr)
 library(emmeans)
 library(pROC)
 library(scales)
+library(modelr)
 
 
 set.seed(321)
@@ -34,77 +35,6 @@ filter_outliers <- function(x) {
 }
 
 
-# Estimate Plots ----------------------------------------------------------
-
-
-# Total Results
-# results <- read.csv("data/ppe/results.csv", check.names = FALSE)
-# results %>%
-#   arrange(contrast) %>%
-#   mutate(p.value = signif(p.value, 4)) %>%
-#   ggplot(
-#     aes(
-#       fct_inorder(contrast),
-#       estimate,
-#       ymin = estimate - std.error,
-#       ymax = estimate + std.error,
-#       color = p.value < 0.05
-#     )
-#   ) +
-#   geom_pointrange(
-#     position = position_dodge(width = 0.4), size = 1, linewidth = 1
-#   ) +
-#   geom_hline(yintercept = 0, linewidth = 1.2, linetype = "dashed") +
-#   geom_label(aes(label = p.value), nudge_x = 0.3, size = 3) +
-#   facet_grid(term ~ metric, scale = "free", space = "free_y") +
-#   scale_colour_manual(values = c("navy", "darkred")) +
-#   coord_flip() +
-#   theme(
-#     axis.title.y = element_blank(),
-#     axis.text = element_text(size = 12),
-#     axis.title.x = element_text(size = 14, face = "bold"),
-#     strip.text = element_text(size = 14, face = "bold"),
-#     legend.title = element_text(size = 14),
-#     legend.text = element_text(size = 12),
-#     legend.position = "bottom"
-#   )
-# ggsave("results.png", path = "figures/ppe", width = 8, height = 8)
-
-# # Boot Results
-# boot_results <- read.csv("data/ppe/boot_results.csv", check.names = FALSE)
-# boot_results %>%
-#   filter(term != "surface_location") %>%
-#   arrange(contrast) %>%
-#   mutate(p.value = signif(p.value, 4)) %>%
-#   ggplot(
-#     aes(
-#       fct_inorder(contrast),
-#       estimate,
-#       ymin = estimate - std.error,
-#       ymax = estimate + std.error,
-#       color = p.value
-#     )
-#   ) +
-#   geom_pointrange(
-#     position = position_dodge(width = 0.4), size = 1, linewidth = 1
-#   ) +
-#   geom_hline(yintercept = 0, linewidth = 1.2, linetype = "dashed") +
-#   geom_label(aes(label = p.value), nudge_x = 0.3, size = 3) +
-#   facet_grid(term ~ metric, scale = "free", space = "free_y") +
-#   scale_colour_gradient(high = "navy", low = "darkred") +
-#   coord_flip() +
-#   theme(
-#     axis.title.y = element_blank(),
-#     axis.text = element_text(size = 12),
-#     axis.title.x = element_text(size = 14, face = "bold"),
-#     strip.text = element_text(size = 14, face = "bold"),
-#     legend.title = element_text(size = 14),
-#     legend.text = element_text(size = 12),
-#     legend.position = "bottom"
-#   )
-# ggsave("boot_results.png", path = "figures/ppe", width = 6, height = 8)
-
-
 # Metric Correlations ----------------------------------------------------
 
 
@@ -122,8 +52,8 @@ data <- read.csv("data/ppe/updated_metadata.csv", check.names = FALSE) %>%
   mutate(
     timing = factor(
       timing,
-      levels = c("pre-sampling", "post-sampling", "post-decon"),
-      labels = c("Pre-sampling", "Post-sampling", "Post-decon")
+      levels = c("pre-sampling", "post-sampling"),
+      labels = c("Pre-sampling", "Post-sampling")
     ),
     location = factor(
       location,
@@ -143,48 +73,34 @@ metric_combos <- as.data.frame(t(combn(metrics, 2)))
 colnames(metric_combos) <- c("x", "y")
 
 make_cor_plot <- function(xval, yval, alpha=0.2) {
-  # form <- ifelse(xval %in% c("mpr", "ms") & yval %in% c("mpr", "ms"), "y ~ log(x)", "log(y) ~ x")
-  # lab_form <- ifelse(form == "y ~ log(x)", "exp(y) ~ x", form)
-  
-  # form <- as.formula(form)
-  # lab_form <- as.formula(lab_form)
-  eq_fmt <- "`y`~`=`~%.3g~italic(e)^{%.3g~`x`}"
+  form <- as.formula(sprintf("%s ~ %s", yval, xval))
+  mod <- lm(form, data)
 
-  temp_df <- data %>%
-    filter(timing == "Post-sampling") %>%
-    mutate(across(c(!!sym(xval), !!sym(yval)), log)) 
-  cls <- temp_df %>% # Which is best at discriminating post-samples?
+  grid <- data %>%
+    data_grid(!!sym(xval)) %>%
+    add_predictions(mod)
+
+  cls <- data %>% # Which is best at discriminating post-samples?
     select(!!sym(xval), !!sym(yval)) %>%
     kmeans(centers=2, trace=TRUE)
-  temp_df %>%
-    mutate(cluster=as.character(cls$cluster)) %>%
-    ggplot(aes(x = !!sym(xval), y = !!sym(yval), color=location)) +
-    stat_ellipse(aes(fill=cluster), geom="polygon", alpha=0, type="norm", color="black", show.legend = FALSE) +
-    geom_point(alpha = alpha, size=3) +
-    stat_smooth(method="lm", formula=y~exp(x), color = "lightblue") +
-    # stat_cor(aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), color="black") +
-    # stat_regline_equation(formula=as.formula(form), color="black") +
-    # stat_poly_line(method="glm", formula=y ~ x, color="red", method.args=list(family=gaussian(link = "log"))) +  
-    stat_poly_eq(
-      aes(label = sprintf(eq_fmt, after_stat(b_0), after_stat(b_1))), 
-      label.x = 0.1, label.y = 0.85, color = "black",
-      formula =  y ~ exp(x), 
-      output.type = "numeric",
-      parse = TRUE
-    ) +
-    stat_poly_eq(
-               aes(label = paste(..rr.label..)), formula =  y ~ exp(x),
-               parse = TRUE, size = 3.5, color = "black") +
+
+  data %>%
+    mutate(cluster=as.factor(cls$cluster)) %>%
+    ggplot(aes(x = log(!!sym(xval)), y = log(!!sym(yval)))) +
+    # stat_ellipse(aes(fill=cluster), geom="polygon", alpha=0, type="norm", color="black", show.legend = FALSE) +
+    # geom_point(alpha = alpha, color="darkcyan", size=3) +
+    geom_hex(bins=50) +
+    geom_line(aes(y=log(pred)), data=grid, color="red", linewidth=1.5) +
+    # scale_x_log10() +
+    # scale_y_log10() +
+    # facet_grid(vars(!!sym(facval))) +
+    coord_fixed() +
     scale_color_manual(values=c("darkcyan", "darkorange")) +
-    scale_fill_manual(values=c("darkcyan", "darkorange", "maroon")) +
-    labs(
-      x = toupper(xval),
-      y = toupper(yval)
-    ) +
+    scale_fill_gradient(low="darkcyan", high="darkorange") +
     main_theme
 }
 
-cor_plots <- pmap(metric_combos, make_cor_plot, alpha=0.75)
+cor_plots <- pmap(metric_combos, make_cor_plot, alpha=0.25)
 ggarrange(plotlist = cor_plots, align = "hv", ncol=3, common.legend = TRUE, legend="bottom") 
   # annotate_figure(top=text_grob("Metric Distributions of Post-Sampling Boot Swabs", size=32))
 ggsave("corplot.png", path = "figures/ppe", width = 16, height = 8)
@@ -192,7 +108,7 @@ ggsave("corplot.png", path = "figures/ppe", width = 16, height = 8)
 data %>%
   pivot_longer(c(mpr, ms, auc, qr), names_to = "metric") %>%
   # filter_outliers() %>%
-  ggplot(aes(value, location, fill=timing)) +
+  ggplot(aes(value, timing, fill=location)) +
   geom_density_ridges(alpha=0.5, scale=1.25) +
   facet_wrap(vars(metric), scales="free_x") +
   scale_color_manual(values=c("darkcyan", "darkorange")) +
@@ -209,8 +125,8 @@ ggsave("distributions.png", path="figures/ppe", width=16, height=12)
 
 # Principal Component Analysis -------------------------------------------
 
-pca_data <- data %>%
-  filter(timing == "Post-sampling")
+pca_data <- data 
+  # filter(timing == "Post-sampling")
 
 pca_res <- prcomp(~ log(mpr) + log(ms) + log(auc), data = pca_data, scale. = TRUE)
 summary(pca_res)
@@ -225,9 +141,9 @@ make_pca_plot <- function(x, y, alpha=0.5) {
     kmeans(centers=2, trace=TRUE)
   pca_df %>%
     mutate(cluster = as.character(cls$cluster)) %>%
-    ggplot(aes(x = !!sym(x), y = !!sym(y), color=location)) +
+    ggplot(aes(x = !!sym(x), y = !!sym(y))) +
+    geom_point(alpha = alpha, color="darkcyan", size=3) +
     stat_ellipse(aes(fill=cluster), geom="polygon", alpha=0, type="t", color="black", show.legend = FALSE) +
-    geom_point(alpha = alpha, size=3) +
     scale_color_manual(values=c("darkcyan", "darkorange")) +
     scale_fill_manual(values=c("darkcyan", "darkorange")) +
     scale_y_continuous(limits=c(-2, 6)) +
@@ -247,7 +163,14 @@ pca_plots <- pmap(pca_combos, make_pca_plot)
 ggarrange(plotlist = pca_plots, align = "hv", ncol=3, common.legend = TRUE, legend="bottom") 
   # annotate_figure(top=text_grob("PCA Distributions of Post-Sampling Boot Swabs", size=24))
 ggsave("pca_plot.png", path="figures/ppe", width = 12, height = 5)
-gg
+
+
+# PC1 Model --------------------------------------------------------------
+
+
+# pc_form <- PC1 ~ location + timing
+# pc_mod <- lm(pc_form, pca_df)
+
 
 pca_long <- pca_df %>%
   pivot_longer(c(mpr, ms, auc, PC1, PC2, PC3), names_to="metric") %>%
@@ -268,6 +191,7 @@ pca_df %>%
     aes(label = after_stat(p.signif)),
     method="wilcox.test", size=8, vjust=0.5, show.legend=FALSE
   ) +
+  facet_grid(~ timing) +
   scale_fill_manual(values = c("darkcyan", "darkorange")) +
   scale_color_manual(values = c("darkcyan", "darkorange")) +
   main_theme +
@@ -298,29 +222,30 @@ pca_df %>%
 # ROC Analysis -----------------------------------------------------------
 
 
-get_rocs <- function(m, df) {
+get_rocs <- function(m, t, df) {
   temp_df <- df %>%
     filter(
-      timing == "Post-sampling",
+      timing == t,
       metric == m
     ) %>%
     roc(location, value)
   coords(temp_df) %>%
     mutate(
+      timing = t,
       metric = m,
       auc = ci.auc(temp_df)[[2]]
     )
 }
 
-metrics <- unique(pca_long$metric)
-roc_df <- map_dfr(metrics, get_rocs, df=pca_long)
+var_list <- expand.grid(m = unique(pca_long$metric), t = unique(pca_long$timing))
+roc_df <- pmap_dfr(var_list, get_rocs, df=pca_long)
 
-auc_df <- roc_df %>%
-  summarize(auc = signif(mean(auc), 3), .by = metric) %>%
-  mutate(
-    y = c(0.5, 0.45, 0.4, 0.35, 0.3, 0.25),
-    label = paste(metric, "=", auc)
-  )
+# auc_df <- roc_df %>%
+#   summarize(auc = signif(mean(auc), 3), .by = c(metric, timing)) %>%
+#   mutate(
+#     y = c(0.5, 0.45, 0.4, 0.35, 0.3, 0.25),
+#     label = paste(metric, "=", auc)
+#   )
 
 roc_df %>%
   arrange(auc, sensitivity) %>%
@@ -330,18 +255,19 @@ roc_df %>%
     slope = 1, intercept = 1, linetype = "dashed",
     color = "gray50", inherit.aes = FALSE
   ) +
-  geom_text(aes(0.2, y, label=label, color=metric), data=auc_df, size=8, hjust=0, inherit.aes=FALSE, show.legend=FALSE) +
+  # geom_text(aes(0.2, y, label=label, color=metric), data=auc_df, size=8, hjust=0, inherit.aes=FALSE, show.legend=FALSE) +
   scale_x_reverse(
     limits = c(0, 1), breaks = seq(0, 1, 0.2),
     # sec.axis = sec_axis(~., name = "Log Dilution Factor", breaks = NULL, labels = NULL)
   ) +
   scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
+  facet_grid(~ timing) +
   labs(
     x = "Specificity", y = "Sensitivity"
   ) +
   main_theme +
   theme(
-    legend.position = "none",
+    # legend.position = "none",
     legend.title = element_blank(),
   )
 
