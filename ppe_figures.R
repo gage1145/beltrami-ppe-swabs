@@ -25,15 +25,6 @@ main_theme <- theme(
   # panel.grid = element_blank()
 )
 
-filter_outliers <- function(x) {
-  filter(
-    x,
-    value >= (quantile(value, 0.25, na.rm=TRUE) - 1.5 * IQR(value, na.rm=TRUE)),
-    value <= (quantile(value, 0.75, na.rm=TRUE) + 1.5 * IQR(value, na.rm=TRUE)),
-    .by = c(metric, location, timing)
-  )
-}
-
 
 # Metric Correlations ----------------------------------------------------
 
@@ -87,23 +78,21 @@ make_cor_plot <- function(xval, yval, alpha=0.2) {
   data %>%
     mutate(cluster=as.factor(cls$cluster)) %>%
     ggplot(aes(x = log(!!sym(xval)), y = log(!!sym(yval)))) +
-    # stat_ellipse(aes(fill=cluster), geom="polygon", alpha=0, type="norm", color="black", show.legend = FALSE) +
-    # geom_point(alpha = alpha, color="darkcyan", size=3) +
     geom_hex(bins=50) +
     geom_line(aes(y=log(pred)), data=grid, color="red", linewidth=1.5) +
-    # scale_x_log10() +
-    # scale_y_log10() +
-    # facet_grid(vars(!!sym(facval))) +
     coord_fixed() +
     scale_color_manual(values=c("darkcyan", "darkorange")) +
     scale_fill_gradient(low="darkcyan", high="darkorange") +
-    main_theme
+    main_theme +
+    theme(
+      legend.key.width = unit(7, "cm")
+    )
 }
 
 cor_plots <- pmap(metric_combos, make_cor_plot, alpha=0.25)
 ggarrange(plotlist = cor_plots, align = "hv", ncol=3, common.legend = TRUE, legend="bottom") 
   # annotate_figure(top=text_grob("Metric Distributions of Post-Sampling Boot Swabs", size=32))
-ggsave("corplot.png", path = "figures/ppe", width = 16, height = 8)
+ggsave("corplot.png", path = "figures/ppe", width = 16, height = 5.6)
 
 data %>%
   pivot_longer(c(mpr, ms, auc, qr), names_to = "metric") %>%
@@ -125,10 +114,10 @@ ggsave("distributions.png", path="figures/ppe", width=16, height=12)
 
 # Principal Component Analysis -------------------------------------------
 
-pca_data <- data 
-  # filter(timing == "Post-sampling")
+pca_data <- data %>%
+  mutate(across(c(mpr, ms, auc), log))
 
-pca_res <- prcomp(~ log(mpr) + log(ms) + log(auc), data = pca_data, scale. = TRUE)
+pca_res <- prcomp(~ mpr + ms + auc, data = pca_data, scale. = TRUE)
 summary(pca_res)
 
 pca_df <- pca_data %>%
@@ -141,13 +130,14 @@ make_pca_plot <- function(x, y, alpha=0.5) {
     kmeans(centers=2, trace=TRUE)
   pca_df %>%
     mutate(cluster = as.character(cls$cluster)) %>%
+    arrange(desc(location)) %>%
     ggplot(aes(x = !!sym(x), y = !!sym(y))) +
-    geom_point(alpha = alpha, color="darkcyan", size=3) +
+    geom_point(aes(color=location), alpha = alpha, size=3) +
     stat_ellipse(aes(fill=cluster), geom="polygon", alpha=0, type="t", color="black", show.legend = FALSE) +
     scale_color_manual(values=c("darkcyan", "darkorange")) +
     scale_fill_manual(values=c("darkcyan", "darkorange")) +
-    scale_y_continuous(limits=c(-2, 6)) +
-    scale_x_continuous(limits=c(-2, 6)) +
+    # scale_y_continuous(limits=c(-2, 6)) +
+    # scale_x_continuous(limits=c(-2, 6)) +
     coord_fixed() +
     labs(
       x = toupper(x),
@@ -223,18 +213,18 @@ pca_df %>%
 
 
 get_rocs <- function(m, t, df) {
-  temp_df <- df %>%
-    filter(
-      timing == t,
-      metric == m
-    ) %>%
-    roc(location, value)
-  coords(temp_df) %>%
-    mutate(
-      timing = t,
-      metric = m,
-      auc = ci.auc(temp_df)[[2]]
-    )
+    temp_df <- df %>%
+      filter(
+        timing == t,
+        metric == m
+      ) %>%
+      roc(location, value)
+    coords(temp_df) %>%
+      mutate(
+        timing = t,
+        metric = m,
+        auc = ci.auc(temp_df)[[2]]
+      )
 }
 
 var_list <- expand.grid(m = unique(pca_long$metric), t = unique(pca_long$timing))
@@ -309,8 +299,8 @@ site_comps <- list(c("Negative Site", "Core Site"))
 sl_comps   <- list(c("Bottom", "Top"))
 pc1_scalar <- abs(min(pca_df$PC1)) + 1
 
-pca_prepped <- pca_df %>%
-  mutate(PC1 = log(PC1 + pc1_scalar))
+pca_prepped <- pca_df 
+  # mutate(PC1 = log(PC1 + pc1_scalar))
 
 # timing Boxplot
 pca_prepped %>%
@@ -325,13 +315,13 @@ pca_prepped %>%
     aes(group = timing),
     comparisons = smpl_comps,
     method = "wilcox.test",
-    label = "p.signif", size = 6, show.legend = FALSE
+    label = "p.format", size = 6, show.legend = FALSE
   ) +
   facet_grid(cols=vars(location)) +
   scale_fill_manual(values = c("darkcyan", "darkorange", "maroon")) +
-  scale_y_continuous(limits = c(0, 3.1)) +
+  # scale_y_continuous(limits = c(0, 3.1)) +
   labs(
-    y = sprintf("Log(PC1 + %s)", round(pc1_scalar, 2)),
+    # y = sprintf("Log(PC1 + %s)", round(pc1_scalar, 2)),
   ) +
   guides(color = guide_legend(override.aes = list(alpha = 1))) +
   main_theme +
@@ -352,16 +342,16 @@ pca_prepped %>%
     position=position_jitter(0.01, 0.1), alpha=0.25
   ) +
   stat_compare_means(
-    label.y = c(3, 3.4, 3.2),
+    # label.y = c(3, 3.4, 3.2),
     method = "wilcox.test", method.args = list(alternative = "less"),
-    comparisons = site_comps, label = "p.signif", ref.group = "negative site",
+    comparisons = site_comps, label = "p.format", ref.group = "negative site",
     bracket.size = 0.5, size = 6, show.legend = FALSE,
   ) +
-  scale_y_continuous(limits = c(0, 3.7)) +
+  # scale_y_continuous(limits = c(0, 3.7)) +
   scale_fill_manual(values = c("darkcyan", "darkorange", "maroon")) +
   facet_grid(cols = vars(timing)) +
   labs(
-    y = sprintf("Log(PC1 + %s)", round(pc1_scalar, 2)),
+    # y = sprintf("Log(PC1 + %s)", round(pc1_scalar, 2)),
   ) +
   guides(color = guide_legend(override.aes = list(alpha = 1))) +
   main_theme +
@@ -383,16 +373,16 @@ pca_prepped %>%
     position=position_jitter(0.01, 0.1), alpha=0.25
   ) +
   stat_compare_means(
-    label.y = c(3, 3.4, 3.2),
+    # label.y = c(3, 3.4, 3.2),
     method = "wilcox.test",
-    comparisons = sl_comps, label = "p.signif",
+    comparisons = sl_comps, label = "p.format",
     bracket.size = 0.5, size = 6, show.legend = FALSE,
   ) +
-  scale_y_continuous(limits = c(0, 3.7)) +
+  # scale_y_continuous(limits = c(0, 3.7)) +
   scale_fill_manual(values = c("darkcyan", "darkorange")) +
   facet_grid(cols = vars(timing)) +
   labs(
-    y = sprintf("Log(PC1 + %s)", round(pc1_scalar, 2)),
+    # y = sprintf("Log(PC1 + %s)", round(pc1_scalar, 2)),
   ) +
   guides(color = guide_legend(override.aes = list(alpha = 1))) +
   main_theme +
@@ -408,7 +398,7 @@ ggsave("surface-location_box.png", path = "figures/ppe", width = 12, height = 8)
 
 
 pca_prepped %>%
-  ggplot(aes(PC1, location, fill = timing)) +
+  ggplot(aes(PC1, timing, fill = location)) +
   geom_density_ridges(alpha = 0.5, scale = 1.2) +
   scale_fill_manual(values = c("darkcyan", "darkorange", "red")) +
   scale_y_discrete(expand = expansion(mult = c(0.025, 0.5))) +
