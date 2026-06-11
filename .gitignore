@@ -48,7 +48,9 @@ po/*~
 # RStudio Connect folder
 rsconnect/
 
+# Certain Images
 *.png
 *.pdf
+!dump_site.png
 
 metadata
