@@ -1,9 +1,31 @@
+# bird-feeder_figures.R
+#
+# Generates the figures for the sentinel ("bird feeder") analysis and saves
+# them to figures/bird-feeder/. Reads the curated data produced by
+# bird-feeder_curate.R (data/bird-feeder/data.csv).
+#
+# Sentinels are stainless-steel plates mounted on bird-feeder stands that were
+# left in the environment at dump-site/perimeter locations (and negative
+# control sites) and periodically swabbed. RT-QuIC metrics (MPR, MS, AUC) are
+# collapsed to principal components; PC1 is used as the contamination score and
+# compared against the negative controls and tracked over time.
+#
+# Scope: stainless-steel surfaces only; the per-plate well controls (sample
+# IDs "N"/"P") are dropped.
+#
+# Outputs:
+#   figures/bird-feeder/pca.png            - PCA score scatter (PC pairs)
+#   figures/bird-feeder/pca_vs_tss.png     - PC1 vs. year, by site/side
+#   figures/bird-feeder/plate_cols.png     - mean PC1 per plate/site, by year
+#   data/bird-feeder/tss_results.csv       - per-group lm(PC1 ~ time) fit stats
+
+
 library(tidyverse)
-library(janitor)
-library(skimr)
-library(broom)
-library(ggpubr)
-library(ggrepel)
+library(janitor)   # clean_names
+library(skimr)     # skim
+library(broom)     # tidy, glance
+library(ggpubr)    # ggarrange, stat_cor, stat_compare_means
+library(magrittr)  # %T>% (tee pipe)
 
 
 main_theme <- theme(
@@ -18,6 +40,10 @@ main_theme <- theme(
 
 
 # Load data --------------------------------------------------------------
+#
+# Read the curated sentinel data, drop plate controls and non-stainless
+# surfaces, and coerce columns to their proper types (factors for the
+# categorical fields, dates, and day-valued time differences).
 
 
 df_ <- read.csv("data/bird-feeder/data.csv", check.names = FALSE) %>%
@@ -38,6 +64,10 @@ skim(df_)
 
 
 # Principal Component Analysis -------------------------------------------
+#
+# Collapse the three log-metrics into principal components. PC1 is the shared
+# "amount of signal" axis used as the contamination score below. Scores are
+# appended to the data, along with the sampling year derived from end_date.
 
 
 pca_res <- df_ %>%
@@ -49,7 +79,6 @@ summary(pca_res)
 pca_df <- df_ %>%
   bind_cols(pca_res$x) %>%
   mutate(
-    # across(matches("PC"), ~ -. + max(.) + 1),
     year = as.factor(year(end_date)),
   )
 
@@ -57,21 +86,18 @@ pca_long <- pca_df %>%
   mutate(row_id = row_number()) %>%
   pivot_longer(c("mpr", "ms", "auc", "PC1", "PC2", "PC3"), names_to = "metric", values_to = "value")
 
-# pc1_scalar <- max(pca_df$PC1) + 1
 
-# pca_comp_df <- inner_join(
-#   pca_long %>% rename(x_pc = metric, x_val = value),
-#   pca_long %>% rename(y_pc = metric, y_val = value),
-#   relationship = "many-to-many"
-# ) %>%
-#   filter(x_pc != y_pc) %>%
-#   arrange(x_pc, desc(y_pc))
+# PCA score scatter ------------------------------------------------------
+#
+# Scatter of each PC pair, points coloured by whether the sample came from a
+# negative control site, with a 99% k-means cluster ellipse. Shows whether the
+# contaminated sites separate from the controls in PC space. pca.png.
+
 
 pca_combos <- as.data.frame(t(combn(paste0("PC", seq(length(pca_res$scale))), 2)))
 colnames(pca_combos) <- c("x", "y")
 
 make_pca_plot <- function(x, y, alpha=0.5) {
-#   pcs <- paste0("PC", c(x, y))
   cls <- pca_df %>%
     select(!!sym(x), !!sym(y)) %>%
     kmeans(centers=2, trace=TRUE) %T>%
@@ -87,9 +113,6 @@ make_pca_plot <- function(x, y, alpha=0.5) {
     stat_ellipse(aes(fill=cluster), level=0.99, geom="polygon", alpha=0, type="t", color="black", show.legend = FALSE) +
     scale_color_manual(values=c("darkorange", "darkcyan")) +
     scale_fill_manual(values=c("darkorange", "darkcyan")) +
-    # facet_grid(~year) +
-    # scale_y_continuous(limits=c(-2, 6)) +
-    # scale_x_continuous(limits=c(-2, 6)) +
     coord_fixed() +
     labs(
       x = toupper(x),
@@ -99,34 +122,16 @@ make_pca_plot <- function(x, y, alpha=0.5) {
 }
 
 pca_plots <- pmap(pca_combos, make_pca_plot)
-ggarrange(plotlist = pca_plots, align = "hv", ncol=3, common.legend = TRUE, legend="bottom") 
-
+ggarrange(plotlist = pca_plots, align = "hv", ncol=3, common.legend = TRUE, legend="bottom")
 ggsave("pca.png", path = "figures/bird-feeder", bg="white", width = 16, height = 4)
 
-# pca_comp_df %>%
-#   filter(str_detect(x_pc, "PC") & str_detect(y_pc, "PC")) %>%
-#   arrange(control) %>%
-#   mutate(control = ifelse(control, "Negative Site", "Dump Site/Perimeter")) %>%
-#   ggplot(aes(x_val, y_val, color = control)) +
-#   geom_point(size = 3, alpha = 0.75) +
-#   # stat_ellipse(geom="polygon", level=0.95, alpha=0.2) +
-#   facet_grid(rows = vars(y_pc), cols = vars(x_pc), scales = "free", switch = ("y")) +
-#   scale_y_continuous(position = "right") +
-#   scale_color_manual(values = c("red", "darkcyan")) +
-#   guides(color = guide_legend(override.aes = list(alpha = 1))) +
-#   # stat_ellipse() +
-#   # coord_fixed() +
-#   labs(
-#     x = NULL, y = NULL,
-#   ) +
-#   main_theme +
-#   theme(
-#     legend.title = element_blank(),
-#     legend.position = "top"
-#   )
 
-
-# Summary ----------------------------------------------------------------
+# Summary / group comparisons --------------------------------------------
+#
+# Build per-group means and compare each site/side/timepoint against the
+# pooled negative-control distribution with a one-sided Wilcoxon test
+# (greater). comps holds the per-group test results; these feed the
+# significance annotations used downstream. The figures focus on PC1.
 
 
 df_sum <- pca_long %>%
@@ -153,7 +158,7 @@ groupings <- expand.grid(
   tss = unique(df_site$time_since_start)
 )
 
-
+# One group (metric x site x side x timepoint) vs. the negative controls.
 get_comps <- function(m, st, sd, tss) {
   temp <- filter(df_sum, metric == m, site == st, side == sd, time_since_start == tss)
   if (nrow(temp) < 1) {
@@ -182,9 +187,20 @@ get_comps <- function(m, st, sd, tss) {
 }
 
 comps <- pmap_dfr(groupings, get_comps)
+
+
+# PC1 vs. time-since-start -----------------------------------------------
+#
+# Track PC1 over sampling years for each site/side. Per-group linear fits
+# (PC1 ~ time_since_start) are written to tss_results.csv, and the trend is
+# plotted with a smooth and correlation labels. pca_vs_tss.png.
+
+# The time-trend figures use PC1, relative to the mean negative-control PC1.
 fig_metric <- "PC1"
 neg_value <- df_neg_sum$neg_mean[df_neg_sum$metric == fig_metric]
 
+# Established sentinels only: long-deployed (>700 days since start),
+# non-control, PC1, excluding re-extracted samples.
 filter_for_fig <- function(df) {
   df %>%
     filter(
@@ -195,40 +211,61 @@ filter_for_fig <- function(df) {
     )
 }
 
-
-# PC1 vs TSS Plot --------------------------------------------------------
-
-
 mods <- pca_long %>%
   filter_for_fig() %>%
-  nest(.by = c(side, site)) %>%
+  nest(.by = c(site)) %>%
   mutate(
     model = map(data, ~ lm(value ~ time_since_start, data = .x)),
-    # tidied = map(model, broom::tidy),
     glanced = map(model, broom::glance)
   ) %>%
   unnest(c(glanced))
 write.csv(select(mods, -c(data, model)), "data/bird-feeder/tss_results.csv")
 
-pca_long %>%
+# Build the plotting frame once so the same rows feed both the plot and the
+# per-time-point comparisons below.
+fig_data <- pca_long %>%
   filter_for_fig() %>%
   mutate(
-    side = factor(side, levels = c("Top", "Bottom")),
     site = factor(site, levels = c("dump site", "perimeter"), labels = c("Dump Site", "Perimeter")),
     year = as.integer(as.character(year))
+  )
+
+# Negative-site signal as plotted: negated PC1, so larger = more signal. The
+# negative site has a single visit, so its points are pooled and reused as the
+# shared baseline that every sentinel time-point is tested against.
+neg_signal <- -df_neg$value[df_neg$metric == fig_metric]
+neg_sd     <- sd(neg_signal)
+
+# Two-sided Wilcoxon per site x year: does the sentinel signal differ from the
+# negative-site baseline? The label sits just above each group's highest point.
+year_comps <- fig_data %>%
+  summarize(
+    p.value = wilcox.test(-value, neg_signal, exact = FALSE, alternative="greater")$p.value,
+    .by = c(site, year)
   ) %>%
+  mutate(
+    label = sprintf("p = %.3g", p.value),
+    y = case_when(site == "Dump Site" ~ 5.6, TRUE ~ 5.1),
+  )
+
+fig_data %>%
   ggplot(aes(x = year, y = -value - neg_value, color=site, fill=site)) +
-  geom_point(size=3, position=position_jitterdodge(0.04, 0, 0.1, seed=56543)) +
-  # stat_smooth(method = "lm", linewidth = 1.5, position=position_dodge(0.1)) +
-  geom_smooth(linewidth=1.5, position=position_dodge(0.1)) +
-  stat_cor(
-    aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")), 
-    size = 6, label.x.npc=0.7, label.y.npc=1, show.legend = FALSE
-  ) +
+  annotate("rect", xmin = -Inf, xmax = Inf, ymin = -neg_sd, ymax = neg_sd, 
+           fill = "blue", alpha = 0.05) +
   geom_hline(yintercept = 0, linetype = "dashed", linewidth = 1.2, color="blue") +
+  geom_point(size=3, position=position_jitterdodge(0.04, 0, 0.1, seed=56543)) +
+  geom_smooth(method="lm",linewidth=1.5, alpha=0.5) +
+  stat_cor(
+    aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")),
+    size = 5, label.x.npc=c(0.25, 0.75), label.y=6, show.legend = FALSE, hjust = 0.5
+  ) +
+  geom_text(
+    aes(x = year, y = y, label = label, group = site),
+    data = year_comps,
+    size = 5, fontface = "bold", show.legend = FALSE
+  ) +
   scale_x_continuous(breaks = seq(2023, 2025)) +
-  # scale_fill_manual(values=c("darkred", "darkorange")) +
-  # scale_color_manual(values=c("darkred", "darkorange")) +
+  scale_y_continuous(breaks = seq(-2, 7), limits=c(NA, 6)) +
   labs(
     x = "Year of Sampling",
     y = "PC1 - mean Neg PC1"
@@ -242,48 +279,45 @@ pca_long %>%
     legend.text = element_text(size = 16),
     legend.position = "top"
   )
-ggsave("pca_vs_tss.png", path = "figures/bird-feeder", width = 12, height = 10)
+ggsave("pca_vs_tss.png", path = "figures/bird-feeder", width = 12, height = 8)
 
 
-# Plots by plate ---------------------------------------------------------
+# PC1 by plate -----------------------------------------------------------
+#
+# Mean PC1 per individual feeder plate, stacked within each site and faceted by
+# year, with site-level means/error bars and a Wilcoxon site comparison.
+# PC1 is negated so larger bars mean more signal. plate_cols.png.
 
 
 pca_plates <- pca_df %>%
   filter(
     str_detect(feeder, "BF"),
     time_in_env > 0
-  ) %>%
-  mutate(
-    # proximity = ifelse(feeder %in% paste0("BF", seq(1,3)), "dump site", "perimeter")
-  ) 
+  )
 
+# Per-plate and per-site mean PC1 (negated) with standard deviations.
 plate_sum <- pca_plates %>%
   summarize(
     across(PC1, c(mean=~-mean(.), stdev=sd)),
     .by = c(feeder, year, site)
   )
 
-prox_sum <- plate_sum %>%
+site_sum <- pca_plates %>%
   summarize(
-    stack_top = sum(PC1_mean),
+    across(PC1, c(mean=~-mean(.), stdev=sd)),
     .by = c(year, site)
-  ) %>%
-  left_join(
-    pca_plates %>%
-      summarize(PC1_stdev = sd(PC1), .by = c(year, site)),
-    by = c("year", "site")
   )
 
 plate_sum %>%
-  ggplot(aes(site, PC1_mean, fill=feeder, group=site)) +
-  geom_col() +
+  ggplot(aes(site, PC1_mean)) +
+  geom_col(aes(fill=feeder, group=site)) +
   geom_point(
-    aes(site, stack_top, group=site),
-    data=prox_sum, inherit.aes = FALSE, position = position_dodge(0.9), shape="square", size=3
+    aes(site, PC1_mean, group=site),
+    data=site_sum, inherit.aes = FALSE, position = position_dodge(0.9), shape="square", size=3
   ) +
   geom_errorbar(
-    aes(site, stack_top, ymin=stack_top - PC1_stdev, ymax=stack_top + PC1_stdev, group=site),
-    data=prox_sum, inherit.aes = FALSE, position = position_dodge(0.9), width=0.2
+    aes(site, PC1_mean, ymin=PC1_mean - PC1_stdev, ymax=PC1_mean + PC1_stdev, group=site),
+    data=site_sum, inherit.aes = FALSE, position = position_dodge(0.9), width=0.2
   ) +
   geom_hline(yintercept=0, linetype="dashed", linewidth=1) +
   stat_compare_means(
