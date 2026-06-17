@@ -33,11 +33,9 @@ df_ <- read.csv("data/bird-feeder/data.csv", check.names = FALSE) %>%
     surface == "SS",
     !control,
     str_detect(feeder, "BF"),
-    # time_since_start != 0
   ) %>%
   select(-c("dilutions", "tech", "collector", "surface")) %>%
   arrange(feeder) %>%
-  # left_join(coord_ref) %>%
   mutate(
     across(c(mpr, ms, auc, raf, ttt), as.numeric),
     across(c(sample_ids:reader, feeder:side, site), as.factor),
@@ -50,7 +48,6 @@ df_ <- read.csv("data/bird-feeder/data.csv", check.names = FALSE) %>%
   )
 
 pc <- prcomp(df_[c("mpr", "ms", "auc")])
-# summary(pc)
 
 df_ %<>% mutate(pc1 = rescale(pc$x[,1], c(1, 0)))
 
@@ -66,13 +63,6 @@ df_sum <- df_ %>%
   )
 
 jitter_amt <- 0.03
-
-# skim(df_)
-
-# df_ %>%
-#   # mutate(pc1=log(pc1)) %>%
-#   ggplot(aes(pc1)) +
-  # geom_histogram()
 
 df_ %>%
   arrange(pc1) %>%
