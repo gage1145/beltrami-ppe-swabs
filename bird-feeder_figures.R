@@ -240,7 +240,7 @@ neg_sd     <- sd(neg_signal)
 # negative-site baseline? The label sits just above each group's highest point.
 year_comps <- fig_data %>%
   summarize(
-    p.value = wilcox.test(-value, neg_signal, exact = FALSE, alternative="greater")$p.value,
+    p.value = wilcox.test(neg_signal, value, exact = FALSE, alternative="greater")$p.value,
     .by = c(site, year)
   ) %>%
   mutate(
@@ -249,7 +249,7 @@ year_comps <- fig_data %>%
   )
 
 fig_data %>%
-  ggplot(aes(x = year, y = -value - neg_value, color=site, fill=site)) +
+  ggplot(aes(x = year, y = neg_value - value, color=site, fill=site)) +
   annotate("rect", xmin = -Inf, xmax = Inf, ymin = -neg_sd, ymax = neg_sd, 
            fill = "blue", alpha = 0.05) +
   geom_hline(yintercept = 0, linetype = "dashed", linewidth = 1.2, color="blue") +
@@ -266,6 +266,8 @@ fig_data %>%
   ) +
   scale_x_continuous(breaks = seq(2023, 2025)) +
   scale_y_continuous(breaks = seq(-2, 7), limits=c(NA, 6)) +
+  scale_fill_manual(values = c("darkorange", "darkcyan")) +
+  scale_color_manual(values = c("darkorange", "darkcyan")) +
   labs(
     x = "Year of Sampling",
     y = "PC1 - mean Neg PC1"
