@@ -4,6 +4,7 @@ library(ggpubr)
 library(modelr)
 library(magrittr)
 library(broom)
+library(scales)
 
 main_theme <- theme(
   plot.title = element_text(size = 30, hjust = 0.5),
@@ -17,15 +18,21 @@ main_theme <- theme(
 
 df_ppe <- read.csv("data/ppe/updated_metadata.csv", check.names = FALSE) %>%
   filter(surface == "boot") %>%
-  select(mpr, ms, auc) %>%
+  select(mpr, ms, auc, location) %>%
   mutate(type = "ppe") %>%
   na.omit()
 
 df_bf <- read.csv("data/bird-feeder/data.csv", check.names = FALSE) %>%
   filter(surface == "SS") %>%
-  clean_names(replace = c("Sample IDs" = "sample_ids", "TtT" = "ttt")) %>%
-  select(mpr, ms, auc) %>%
+  clean_names(replace = c("Sample IDs" = "sample_ids", "TtT" = "ttt")) %>% 
+  select(mpr, ms, auc, site) %>%
   mutate(type = "bf") %>%
+  rename(location = site) %>%
+  mutate(location = case_when(
+    location == "perimeter" ~ "outer",
+    location == "dump site" ~ "inner",
+    TRUE ~ location
+  )) %>%
   na.omit()
 
 df_ <- bind_rows(df_ppe, df_bf) %>%
@@ -119,8 +126,9 @@ make_cor_plot <- function(xval, yval) {
   rr_log <- glance(mod_log)$r.squared
 
   rr_label_df <- tibble(
-    x = c(max(df_[[xval]], na.rm = TRUE) / 2, max(df_[[xval]], na.rm = TRUE) / 2),
-    y = c(0.99 * max(df_[[yval]], na.rm = TRUE), 0.93 * max(df_[[yval]], na.rm = TRUE)),
+    x = c(min(df_[[xval]], na.rm = TRUE), max(df_[[xval]], na.rm = TRUE)),
+    y = rep(0.99 * max(df_[[yval]], na.rm = TRUE), 2),
+    hjust = c(0, 1),
     label = c(paste("Untransformed R^2 =", round(rr, 3)), paste("Log-Transformed R^2 =", round(rr_log, 3))),
     type = c("untransformed", "log_transformed")
   )
@@ -128,14 +136,15 @@ make_cor_plot <- function(xval, yval) {
   df_ %>%
     ggplot(aes(x = !!sym(xval), y = !!sym(yval))) +
     geom_hex(bins=50) +
-    geom_line(aes(y=pred, color=type), data=grid, linewidth=1.5) +
+    geom_line(aes(y=pred, color=type), data=grid, linewidth=2) +
     geom_label(
-      aes(x = x, y = y, label = label, color=type), data=rr_label_df,
-      size = 5, hjust = 0.5, vjust = 0, show.legend = FALSE
+      aes(x = x, y = y, label = label, color=type, hjust=hjust), data=rr_label_df,
+      size = 5, vjust = 0, show.legend = FALSE
     ) +
-    scale_fill_gradient(low="navy", high="darkorange") +
-    scale_x_continuous(limits=c(min(df_[[xval]], na.rm=TRUE), max(df_[[xval]], na.rm=TRUE))) +
-    scale_y_continuous(limits=c(min(df_[[yval]], na.rm=TRUE), max(df_[[yval]], na.rm=TRUE))) +
+    scale_fill_gradient(low="cyan4", high="cyan2") +
+    scale_color_manual(values=c("#d70500", "darkred")) +
+    scale_x_log10(limits=c(min(df_[[xval]], na.rm=TRUE), max(df_[[xval]], na.rm=TRUE))) +
+    scale_y_log10(limits=c(min(df_[[yval]], na.rm=TRUE), max(df_[[yval]], na.rm=TRUE))) +
     labs(
       fill = "Count"
     ) +
@@ -172,15 +181,38 @@ sprintf("Log-transformed PC1 = %.2f", pca_res_log$importance[2,1])
 df_pca <- df_ %>%
   bind_cols(pca_res$x)
 
-df_pca %>%
+bf_pca_plot <- df_pca %>%
+  filter(type == "bf") %>%
+  mutate(
+    # across(c(PC1, PC2), rescale),
+    location = factor(location, levels = c("control", "inner", "outer"))
+) %>%
+  arrange(location) %>%
   ggplot(aes(x = PC1, y = PC2)) +
-  geom_point(aes(color=location), size=3, alpha=0.5) +
-  scale_fill_gradient(low="navy", high="darkorange") +
-  labs(
-    fill = "Count"
-  ) +
+  geom_point(aes(color=location), size=5, alpha=0.5) +
+  scale_color_manual(values=c("darkcyan", "red", "orange2")) +
   main_theme +
   theme(
-    legend.title = element_text(vjust = 1),
-    legend.key.width = unit(7, "cm")
+    legend.title = element_blank(),
+    legend.position = "bottom"
   ) 
+bf_pca_plot
+
+ppe_pca_plot <- df_pca %>%
+  filter(type == "ppe") %>%
+  mutate(
+    # across(c(PC1, PC2), rescale),
+    location = factor(location, levels = c("negative site", "dump site", "perimeter"))
+) %>%
+  arrange(desc(location)) %>%
+  ggplot(aes(x = PC1, y = PC2)) +
+  geom_point(aes(color=location), size=5, alpha=0.5) +
+  scale_color_manual(values=c("darkcyan", "red", "orange2")) +
+  main_theme +
+  theme(
+    legend.title = element_blank(),
+    legend.position = "bottom"
+  ) 
+ppe_pca_plot
+
+ggarrange(bf_pca_plot, ppe_pca_plot, ncol = 2)

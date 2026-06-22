@@ -27,10 +27,9 @@ git remote remove project-a
 ```r
 # Parse raw .xlsx files, join metadata -> data/updated_metadata.csv
 source("curate.R")  
-# GLM models + pairwise comparisons -> data/results.csv, data/boot_results.csv           
-source("analysis.R")   
 # Spike recovery / titration curve analysis -> spike_data/        
 source("boot_spike_analysis.R") 
+# Analyze data -> data/ppe
 # Generate all plots -> figures/
 source("figures.R")            
 ```
@@ -38,7 +37,6 @@ source("figures.R")
 ### Bird Feeder (Sentinel) Swabs
 ```r
 source("bird-feeder_curate.R")
-source("bird-feeder_analysis.R")
 source("bird-feeder_figures.R")
 ```
 
@@ -61,9 +59,8 @@ renv::restore()
 1. `raw/PROJECT/*.xlsx` — Raw RT-QuIC plate reader output files (naming convention: `YYYYMMDD_rN_GR_PROJECT_swabs.xlsx`)
 2. `data/PROJECT/*metadata.csv` + `data/new_metadata.csv` — Sample metadata with location, surface, timing, and technician info
 3. `PROJECT_curate.R` reads raw `.xlsx` via `quicR::get_quic()` and `quicR::calculate_metrics()`, parses the metadata CSVs (splitting a freeform `Comment` column into structured fields), then joins and writes `data/updated_metadata.csv`
-4. `PROJECT_analysis.R` reads curated data files, and analyses the data.
-5. `PROJECT_figures.R` reads the results and metadata CSVs to produce all plots saved to `figures/PROJECT/`
-6. `boot_spike_analysis.R` reads `raw/spike_raw/*.xlsx` (boot spike recovery experiments) separately from the main PPE analysis, fits a GLM titration curve, and writes to `data/spike_data/`
+4. `PROJECT_figures.R` reads the results and metadata CSVs to produce all plots saved to `figures/PROJECT/`
+5. `boot_spike_analysis.R` reads `raw/spike_raw/*.xlsx` (boot spike recovery experiments) separately from the main PPE analysis, fits a GLM titration curve, and writes to `data/spike_data/`
 
 ## Key Metrics
 

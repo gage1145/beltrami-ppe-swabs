@@ -31,6 +31,7 @@ library(tidyverse)
 library(magrittr)   # %T>% (tee pipe) used in the PCA normality diagnostic
 library(ggpubr)     # ggarrange, stat_compare_means
 library(ggridges)   # geom_density_ridges
+library(ggnewscale)
 library(pROC)       # roc, coords, ci.auc
 library(scales)     # rescale
 library(modelr)     # data_grid, add_predictions
@@ -96,11 +97,12 @@ data <- read.csv("data/ppe/updated_metadata.csv", check.names = FALSE) %>%
 # data as PC1-PC3.
 
 
-pca_data <- data 
-  # mutate(across(c(mpr, ms, auc), log))
+pca_data <- data %>%
+  summarize(across(c(mpr, ms, auc), median), .by = c(sample_id, location, timing, surface_location))
 
 pca_res <- prcomp(~ mpr + ms + auc, data = pca_data, scale. = TRUE)
-summary(pca_res)
+pca_sum <- summary(pca_res)
+pca_sum
 
 pca_df <- pca_data %>%
   cbind(pca_res$x)
@@ -114,6 +116,10 @@ pca_df <- pca_data %>%
 
 pca_df %>%
   pivot_longer(c(PC1, PC2, PC3), names_to = "metric") %>%
+  mutate(
+    pc = as.integer(str_remove(metric, "PC")),
+    metric = paste0(metric, "(", round(100 * pca_sum$importance[2, pc], 1), "%)")
+  ) %>%
   mutate(pos = value > 0) %T>%
   {
     print(
@@ -143,13 +149,29 @@ pca_df %>%
 # pca_plot.png.
 
 
-pca_combos <- as.data.frame(t(combn(paste0("PC", seq(length(pca_res$scale))), 2)))
+pca_combos <- as.data.frame(t(combn(paste0("PC", seq(length(pca_res$scale))), 2))) %>%
+  mutate(
+    across(everything(), ~ paste0(., " (", round(100 * pca_sum$importance[2, as.integer(str_remove(., "PC"))], 1), "%)"))
+  )
 colnames(pca_combos) <- c("x", "y")
+
+rename_pc <- function(cols) {
+  for (i in 1:length(cols)) {
+    if (str_detect(cols[i], "PC")) {
+      pc <- as.integer(str_remove(cols[i], "PC"))
+      # pc_format <- round(pc * 100, 2)
+      label <- paste0("PC", pc, " (", round(100 * pca_sum$importance[2, pc], 1), "%)")
+      cols[i] <- label
+    }
+  }
+  return(cols)
+}
 
 make_pca_plot <- function(x, y, alpha=0.5) {
   centers <- 2
 
   cls <- pca_df %>%
+    rename_with(rename_pc) %>%
     select(!!sym(x), !!sym(y)) %>%
     kmeans(centers=centers, trace=TRUE)
   
@@ -162,6 +184,7 @@ make_pca_plot <- function(x, y, alpha=0.5) {
     mutate(cluster = as.character(cls$cluster))
 
   temp_df %>%
+    rename_with(rename_pc) %>%
     arrange(desc(location)) %>%
     ggplot(aes(x = !!sym(x), y = !!sym(y))) +
     geom_point(aes(color=location), alpha = alpha, size=3) +
@@ -185,47 +208,80 @@ pca_plots <- pmap(pca_combos, make_pca_plot)
 pca_plot <- ggarrange(plotlist = pca_plots, ncol=1, legend="none")
 pca_plot
 
-pca_sum <- pca_df %>%
-  # pivot_longer(c(PC1, PC2, PC3), names_to = "PC", values_to = "value") %>%
+
+timing_pvals <- pca_df %>%
   summarize(
-    mean = mean(PC1),
-    median = median(PC1),
-    sd = sd(PC1),
-    .by = c(location, timing)
+    p.value = wilcox.test(PC1 ~ timing)$p.value,
+    .by = location
+  ) %>%
+  mutate(
+    label = paste("p =", signif(p.value, 2)),
+    xmin  = ifelse(location == "Negative Site", 0.875, 1.125),
+    xmax  = ifelse(location == "Negative Site", 1.875, 2.125),
+    y     = ifelse(location == "Negative Site", 5.5, 6.5),
+    color = ifelse(p.value < 0.05, "darkred", "black")
   )
+
+location_pvals <- pca_df %>%
+  summarize(
+    p.value = wilcox.test(PC1 ~ location)$p.value,
+    .by = timing
+  ) %>%
+  mutate(
+    label = paste("p =", signif(p.value, 2)),
+    # x     = ifelse(timing == "Post-sampling", 0.875, 1.125),
+    y     = 9,
+    color = ifelse(p.value < 0.05, "darkred", "black")
+  )
+
+df_sum <- pca_df %>%
+  summarize(
+    n = n(), .by = c(location, timing)
+  )
+
+dodge_amt <- 0.7
 
 pc_box <- pca_df %>% 
   select(PC1, location, timing) %>% 
-  # pivot_longer(c(PC1, PC2, PC3), names_to = "PC", values_to = "value") %>%
   ggplot(aes(timing, PC1, fill=location, color=location)) +
   geom_hline(yintercept = 0, linetype="dashed", color="gray50", linewidth=1) +
-  geom_point(position=position_jitterdodge(0.4, 0, 0.5), alpha = 0.5) +
-  geom_point(
-    aes(y=median, group=location), data=pca_sum, position=position_dodge(0.5), 
-    shape=8, size=3, fill="black", color="black", stroke=2
-  ) +
-  geom_errorbar(
-    aes(y=NULL, ymin=mean-sd, ymax=mean+sd), data=pca_sum, position=position_dodge(0.5), 
-    color="black", width=0.2
-  ) +
-  stat_compare_means(
-    aes(label = paste("p =", after_stat(p.format)), group=location), 
-    method="wilcox.test", size=5, vjust=0.5, show.legend=FALSE,
-    method.args = list(alternative = "less"), label.y = 9.5
+  geom_point(position=position_jitterdodge(0.3, 0, dodge_amt)) +
+  geom_boxplot(position = position_dodge(dodge_amt), outlier.shape=NA,  color="black", width=0.4) +
+  geom_text(# Number of samples
+    aes(label = paste("n =", n), group = location, y = 9.5), fontface = "bold",
+    data = df_sum, position = position_dodge(dodge_amt), size=5, vjust=0.5
   ) +
   scale_color_manual(values=c("darkcyan", "darkorange")) +
   scale_fill_manual(values=c("darkcyan", "darkorange")) +
+  new_scale_color() +
+  geom_text(# Location Comparisons
+    aes(x = timing, y = y, label = label, color = color),
+    data = location_pvals, inherit.aes = FALSE, size = 5, fontface = "bold"
+  ) +
+  geom_text(# Timing Comparisons
+    aes(x = (xmin + xmax) / 2, y = y + 0.3, label = label, color = color),
+    data = timing_pvals, inherit.aes = FALSE, size = 5, fontface = "bold"
+  ) +
+  geom_segment(
+    aes(x = xmin, xend = xmax, y = y, yend = y, color = color),
+    data = timing_pvals, inherit.aes = FALSE, linewidth = 0.5
+  ) +
+  geom_segment(
+    aes(x = xmin, xend = xmin, y = y - 0.2, yend = y, color = color),
+    data = timing_pvals, inherit.aes = FALSE, linewidth = 0.5
+  ) +
+  geom_segment(
+    aes(x = xmax, xend = xmax, y = y - 0.2, yend = y, color = color),
+    data = timing_pvals, inherit.aes = FALSE, linewidth = 0.5
+  ) +
+  scale_color_identity() +
   scale_y_continuous(breaks = seq(-10, 20, 2)) +
   coord_cartesian(ylim=c(-1.5, 10)) +
   labs(
-    x = "PC",
+    x = "Timing",
     y = "PC1"
   ) +
   main_theme +
-  guides(
-    color = guide_legend(override.aes = list(size = 7, alpha = 1)),
-    fill = guide_legend(override.aes = list(size = 7, alpha = 1))
-  ) +
   theme(
     legend.title = element_blank(),
     legend.position = "top",
