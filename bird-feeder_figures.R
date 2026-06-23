@@ -25,6 +25,7 @@ library(janitor)   # clean_names
 library(skimr)     # skim
 library(broom)     # tidy, glance
 library(ggpubr)    # ggarrange, stat_cor, stat_compare_means
+library(ggnewscale)
 library(magrittr)  # %T>% (tee pipe)
 
 
@@ -72,7 +73,7 @@ skim(df_)
 
 pca_res <- df_ %>%
   select(mpr, ms, auc) %>%
-  mutate(across(everything(), log)) %>%
+  # mutate(across(everything(), log)) %>%
   prcomp(scale. = TRUE)
 summary(pca_res)
 
@@ -269,17 +270,18 @@ fig_data %>%
   scale_fill_manual(values = c("darkorange", "darkcyan")) +
   scale_color_manual(values = c("darkorange", "darkcyan")) +
   labs(
-    x = "Year of Sampling",
+    # x = "Year of Sampling",
     y = "PC1 - mean Neg PC1"
   ) +
   main_theme +
   theme(
     axis.text = element_text(size = 16),
     axis.title = element_text(size = 20),
+    axis.title.x = element_blank(),
     strip.text = element_text(size = 20),
     legend.title = element_blank(),
     legend.text = element_text(size = 16),
-    legend.position = "top"
+    legend.position = "bottom"
   )
 ggsave("pca_vs_tss.png", path = "figures/bird-feeder", width = 12, height = 8)
 
@@ -300,44 +302,92 @@ pca_plates <- pca_df %>%
 # Per-plate and per-site mean PC1 (negated) with standard deviations.
 plate_sum <- pca_plates %>%
   summarize(
-    across(PC1, c(mean=~-mean(.), stdev=sd)),
+    across(PC1, c(mean=~-mean(.), median=~-median(.), stdev=sd)),
     .by = c(feeder, year, site)
   )
 
 site_sum <- pca_plates %>%
   summarize(
-    across(PC1, c(mean=~-mean(.), stdev=sd)),
-    .by = c(year, site)
+    p.value = wilcox.test(PC1 ~ site)$p.value,
+    .by = c(year)
+  ) %>%
+  mutate(
+    label = paste("p =", signif(p.value, 2)),
+    y     = 6,
+    color = ifelse(p.value < 0.05, "darkred", "black")
   )
 
-plate_sum %>%
-  ggplot(aes(site, PC1_mean)) +
-  geom_col(aes(fill=feeder, group=site)) +
-  geom_point(
-    aes(site, PC1_mean, group=site),
-    data=site_sum, inherit.aes = FALSE, position = position_dodge(0.9), shape="square", size=3
-  ) +
-  geom_errorbar(
-    aes(site, PC1_mean, ymin=PC1_mean - PC1_stdev, ymax=PC1_mean + PC1_stdev, group=site),
-    data=site_sum, inherit.aes = FALSE, position = position_dodge(0.9), width=0.2
-  ) +
+year_sum <- pca_plates %>%
+  summarize(
+    p.value = pairwise.wilcox.test(PC1, year, p.adjust.method = "bonferroni", exact = FALSE)$p.value,
+    .by = c(site)
+  ) 
+
+df_pairwise <- pca_plates %>%
+  select(PC1, year, site) %>%
+  na.omit()
+  
+mod <- aov(PC1 ~ site * year, data = df_pairwise)
+tukey_results <- TukeyHSD(mod)
+summary(tukey_results)
+print(tukey_results)
+
+dodge_w <- 0.5
+
+comps <- tukey_results$`site:year` %>%
+  as.data.frame() %>%
+  rownames_to_column(var = "comparison") %>%
+  separate(comparison, c("var1", "var2"), sep = "-") %>%
+  separate(var1, c("site1", "year1"), sep = ":") %>%
+  separate(var2, c("site2", "year2"), sep = ":") %>%
+  filter(site1 == site2) %>%
+  mutate(
+    label      = paste("p =", signif(`p adj`, 2)),
+    color      = ifelse(`p adj` < 0.05, "darkred", "black"),
+    y          = c(4.1, 4.9, 4.5, 5.3, 4.1, 4.5),
+    site_offset = ifelse(site1 == "dump site", -dodge_w ** 2 / 2, dodge_w ** 2 / 2),
+    x1         = as.integer(as.character(year2)) - 2022 + site_offset + 0.01,
+    x2         = as.integer(as.character(year1)) - 2022 + site_offset - 0.01,
+    x_mid      = (x1 + x2) / 2
+  )
+
+pca_plates %>%
+  summarize(across(PC1, mean), .by = c(sample_ids, year, site)) %>%
+  ggplot(aes(year, -PC1, fill=site)) +
+  geom_boxplot(width=0.4, box.color = NA, position = position_dodge(dodge_w)) +
   geom_hline(yintercept=0, linetype="dashed", linewidth=1) +
-  stat_compare_means(
-    aes(site, PC1),
-    data = pca_plates,
-    method = "wilcox.test",
-    label.y.npc = 1, label.x.npc=0.5, hjust=0.5,
-    label = "p.format", size = 6, show.legend = FALSE
+  scale_fill_manual(values = c("darkorange", "darkcyan")) +
+  scale_color_manual(values = c("darkorange", "darkcyan")) +
+  new_scale_color() +
+  geom_text(# Site Comparisons
+    aes(x = year,y = y, label = label, color = color),
+    data = site_sum, inherit.aes = FALSE, size = 5, fontface = "bold"
   ) +
-  facet_grid(cols=vars(year)) +
+  geom_text(# Year Comparisons
+    aes(x = x_mid, y = y + 0.2, label = label, color = color),
+    data = comps, inherit.aes = FALSE, size = 5, fontface = "bold"
+  ) +
+  geom_segment(# Horizontal bracket
+    aes(x = x1, xend = x2, y = y, yend = y, color = color),
+    data = comps, inherit.aes = FALSE, linewidth = 0.5
+  ) +
+  geom_segment(# Left tick
+    aes(x = x1, xend = x1, y = y - 0.15, yend = y, color = color),
+    data = comps, inherit.aes = FALSE, linewidth = 0.5
+  ) +
+  geom_segment(# Right tick
+    aes(x = x2, xend = x2, y = y - 0.15, yend = y, color = color),
+    data = comps, inherit.aes = FALSE, linewidth = 0.5
+  ) +
+  scale_color_identity() +
   scale_y_continuous(limits=c(NA, 6.4)) +
   labs(
     y="PC1"
   ) +
-  scale_fill_manual(values=c("cyan4", "cyan3", "cyan2", "orange4", "orange3", "orange2")) +
   main_theme +
   theme(
     axis.title.x = element_blank(),
-    legend.title = element_blank()
+    legend.title = element_blank(),
+    legend.position = "bottom"
   )
 ggsave("plate_cols.png", path="figures/bird-feeder", width=12, height=10)

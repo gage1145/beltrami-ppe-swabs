@@ -18,15 +18,21 @@ main_theme <- theme(
 
 df_ppe <- read.csv("data/ppe/updated_metadata.csv", check.names = FALSE) %>%
   filter(surface == "boot") %>%
-  select(mpr, ms, auc, location) %>%
-  mutate(type = "ppe") %>%
+  select(sample_id, mpr, ms, auc, location) %>%
+  mutate(
+    type = "ppe",
+    sample_id = as.character(sample_id)
+  ) %>%
   na.omit()
 
 df_bf <- read.csv("data/bird-feeder/data.csv", check.names = FALSE) %>%
   filter(surface == "SS") %>%
-  clean_names(replace = c("Sample IDs" = "sample_ids", "TtT" = "ttt")) %>% 
-  select(mpr, ms, auc, site) %>%
-  mutate(type = "bf") %>%
+  clean_names(replace = c("Sample IDs" = "sample_id", "TtT" = "ttt")) %>% 
+  select(sample_id, mpr, ms, auc, site) %>%
+  mutate(
+    type = "bf",
+    sample_id = as.character(sample_id)
+  ) %>%
   rename(location = site) %>%
   mutate(location = case_when(
     location == "perimeter" ~ "outer",
@@ -38,6 +44,7 @@ df_bf <- read.csv("data/bird-feeder/data.csv", check.names = FALSE) %>%
 df_ <- bind_rows(df_ppe, df_bf) %>%
   mutate(across(mpr:auc, list(log=log)))
 
+write.csv(df_, "data/pca/combined.csv", row.names=FALSE)
 
 df_ %>%
   pivot_longer(c(mpr, ms, auc, mpr_log, ms_log, auc_log), names_to = "metric") %>%
@@ -125,10 +132,15 @@ make_cor_plot <- function(xval, yval) {
   rr <- glance(mod)$r.squared
   rr_log <- glance(mod_log)$r.squared
 
+  max_y <- max(df_[[yval]], na.rm = TRUE)
+  min_y <- min(df_[[yval]], na.rm = TRUE)
+  max_x <- max(df_[[xval]], na.rm = TRUE)
+  min_x <- min(df_[[xval]], na.rm = TRUE)
+
   rr_label_df <- tibble(
-    x = c(min(df_[[xval]], na.rm = TRUE), max(df_[[xval]], na.rm = TRUE)),
-    y = rep(0.99 * max(df_[[yval]], na.rm = TRUE), 2),
-    hjust = c(0, 1),
+    x = c(min_x, min_x),
+    y = c(0.95 * max_y, 0.65 * max_y),
+    hjust = c(0, 0),
     label = c(paste("Untransformed R^2 =", round(rr, 3)), paste("Log-Transformed R^2 =", round(rr_log, 3))),
     type = c("untransformed", "log_transformed")
   )

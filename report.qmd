@@ -1,0 +1,177 @@
+---
+title: "Beltrami County PPE & Sentinel Swab Analysis"
+date: today
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    toc-title: "Contents"
+    theme: flatly
+    embed-resources: true
+    fig-align: center
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+![](figures/dump_site_annotaded.png){width="100%"}
+
+::: {.panel-tabset}
+
+```{r}
+library(tidyverse)
+library(skimr)
+```
+
+## Combined PCA
+
+<!-- ### Background -->
+
+<!-- Describe the motivation for a joint analysis: testing whether PPE boot swabs and sentinel plates capture the same contamination signal across both sample types. -->
+
+### Methods
+
+Boot swabs from the PPE analysis and stainless-steel swabs from the bird-feeder sentinel analysis were pooled into a single dataset. Pairwise correlations among MPR, MS, and AUC were visualized as hexagonal density scatter plots with ordinary least-squares fits overlaid in both raw and log-transformed space, with R² reported for each. A joint PCA was run on both raw and log-transformed metrics (`prcomp()`, scaled and centered) to compare variance explained by PC1 across transformations and to evaluate whether the two sample types occupy overlapping regions of metric space.
+
+### Results
+
+#### Data Summary
+
+```{r combined-summary}
+df_ <- read.csv("data/pca/combined.csv", check.names = FALSE)
+df_ %>%
+  summarize(.by=c(sample_id, location, type)) %>%
+  count(type, location) %>%
+  mutate(type = case_when(type == "ppe" ~ "PPE Swabs", type == "bf" ~ "Bird Feeder", TRUE ~ type)) %>%
+  mutate(
+    location = case_when(location == "inner" ~ "dump site", location == "outer" ~ "perimeter", location == "control" ~ "negative site", TRUE ~ location)
+  ) %>%
+  pivot_wider(names_from = type, values_from = n, values_fill = 0) %>%
+  rename(Location = location) %>%
+  knitr::kable(caption = "Sample counts by dataset and location.")
+```
+
+#### Untransformed metrics
+
+```{r PCA}
+df_ %>%
+  select(mpr, ms, auc) %>%
+  prcomp(scale. = TRUE) %>%
+  summary()
+```
+
+#### Log-transformed metrics
+```{r Log PCA}
+df_ %>%
+  select(mpr, ms, auc) %>%
+  mutate(across(everything(), log)) %>%
+  prcomp(scale. = TRUE) %>%
+  summary()
+```
+
+![Pairwise metric correlations across the combined PPE and sentinel dataset.](figures/pca/corplot.png){width="100%"}
+
+## PPE Swabs
+
+<!-- ### Background -->
+
+
+
+### Methods
+
+Metrics (MPR, MS, AUC) were median-aggregated per sample across replicate wells before analysis. **Samples were excluded if all four metrics (MPR, MS, AUC, QR) were missing, if they came from the perimeter location, if they were collected post-decontamination, or if the surface was not a boot or blank.** This restricted the dataset to boot and blank swabs from the Core (dump) and Negative sites at pre- and post-sampling timepoints.
+
+
+The three RT-QuIC metrics were submitted to principal component analysis (`prcomp()`, scaled and centered). PC1, which captures the dominant axis of co-variation among the metrics, was used as the summary contamination score in all subsequent comparisons. Group differences in PC1 were tested with two-sided Wilcoxon rank-sum tests, comparing location (Core vs. Negative Site) within each timing and timing (Pre- vs. Post-sampling) within each location. Receiver-operating characteristic (ROC) curves were constructed for each metric × timing combination using the pROC package to assess discrimination between Core and Negative Site samples.
+
+### Results
+
+#### Data Summary
+
+```{r ppe-summary}
+read.csv("data/ppe/updated_metadata.csv", check.names = FALSE) %>%
+  mutate(
+    across(c("location", "surface", "timing"), tolower),
+    timing = str_replace(timing, " ", "-")
+  ) %>%
+  filter(
+    if_any(c(mpr, ms, auc), ~ !is.na(.)),
+    location != "perimeter",
+    timing != "post-decon",
+    surface %in% c("blank", "boot")
+  ) %>%
+  distinct(sample_id, location, timing) %>%
+  count(location, timing) %>%
+  pivot_wider(names_from = timing, values_from = n, values_fill = 0) %>%
+  rename(Location = location) %>%
+  knitr::kable(caption = "Unique sample counts by location and timing.")
+```
+
+#### PCA Analysis
+
+<!-- PC1 captures the shared contamination signal across MPR, MS, and AUC. Points are colored by location (Core vs. Negative Site) and faceted by timing (Pre- vs. Post-sampling). -->
+
+![PCA score scatter (PC pairs) colored by location with k-means cluster ellipses. Inset boxplot shows PC1 by timing and location.](figures/ppe/pca_plot.png){width="100%"}
+
+#### Surface Location
+
+<!-- Comparison of PC1 between the top and bottom of the boot, by timing. -->
+
+![PC1 by boot side (top vs. bottom), faceted by timing.](figures/ppe/surface-location_box.png){width="100%"}
+
+
+## Bird Feeder Sentinels
+
+<!-- ### Background -->
+
+<!-- Describe the sentinel deployment: stainless-steel plates on bird-feeder stands placed at dump-site/perimeter and negative control locations, swabbing schedule. -->
+
+### Methods
+
+RT-QuIC metrics (MPR, MS, AUC) were median aggregated and swabs were limited to the stainless-steel sentinel swabs (excluding the plastic sentinels).
+
+Metrics were submitted to principal component analysis (`prcomp()`, scaled and centered). PC1 was used as the summary contamination score throughout. Group-level means per site × side × timepoint were compared against the pooled negative-control distribution using one-sided Wilcoxon rank-sum tests (alternative: greater). Temporal trends in PC1 were estimated by linear regression (PC1 ~ days since deployment start) separately for each site, restricted to established sentinels deployed for ≥700 days and excluding re-extracted samples. Cross-year within-site differences were assessed using a two-way ANOVA (PC1 ~ site × year) followed by Tukey HSD post-hoc tests.
+
+### Results
+
+#### Data Summary
+
+```{r bf-summary}
+read.csv("data/bird-feeder/data.csv", check.names = FALSE) %>%
+  janitor::clean_names(replace = c("Sample IDs" = "sample_ids", "TtT" = "ttt")) %>%
+  filter(!(sample_ids %in% c("N", "P")), surface == "SS", time_in_env > 0) %>%
+  mutate(year = year(as.Date(end_date))) %>%
+  count(site, year) %>%
+  pivot_wider(names_from = year, values_from = n, values_fill = 0, names_sort = TRUE) %>%
+  rename(Site = site) %>%
+  knitr::kable(caption = "Observations by site and sampling year.")
+```
+
+#### PCA Analysis
+
+![PCA score scatter (PC pairs) colored by site type, with k-means cluster ellipses.](figures/bird-feeder/pca.png){width="100%"}
+
+#### Temporal Trends
+
+![Site-level temporal trends in PC1 colored by site.](figures/bird-feeder/map.png){width="100%"}
+
+```{r bf-temporal}
+read.csv("data/bird-feeder/tss_results.csv") %>%
+  select(site, r.squared, adj.r.squared, p.value, nobs) %>%
+  mutate(
+    across(c(r.squared, adj.r.squared), ~ round(., 3)),
+    p.value = signif(p.value, 3)
+  ) %>%
+  rename(Site = site, `R²` = r.squared, `Adj. R²` = adj.r.squared,
+         `p-value` = p.value, `n` = nobs) %>%
+  knitr::kable(caption = "Linear model results: PC1 ~ days since deployment start, by site.")
+```
+
+![PC1 (relative to negative-site mean) vs. sampling year, by site.](figures/bird-feeder/pca_vs_tss.png){width="100%"}
+
+#### Per-Plate Summary
+
+![Mean PC1 per sentinel plate grouped by site, faceted by year.](figures/bird-feeder/plate_cols.png){width="100%"}
+
+:::

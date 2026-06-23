@@ -87,6 +87,7 @@ data <- read.csv("data/ppe/updated_metadata.csv", check.names = FALSE) %>%
         labels = c("Top", "Bottom")
     )
   )
+write.csv(data, "data/ppe/filtered_data.csv", row.names=FALSE)
 
 
 # Principal Component Analysis -------------------------------------------
@@ -209,6 +210,9 @@ pca_plot <- ggarrange(plotlist = pca_plots, ncol=1, legend="none")
 pca_plot
 
 
+# Boxplot Comparisons ----------------------------------------------------
+
+
 timing_pvals <- pca_df %>%
   summarize(
     p.value = wilcox.test(PC1 ~ timing)$p.value,
@@ -229,7 +233,6 @@ location_pvals <- pca_df %>%
   ) %>%
   mutate(
     label = paste("p =", signif(p.value, 2)),
-    # x     = ifelse(timing == "Post-sampling", 0.875, 1.125),
     y     = 9,
     color = ifelse(p.value < 0.05, "darkred", "black")
   )
@@ -301,16 +304,6 @@ ggsave("pca_plot.png", path="figures/ppe", width = 12, height = 10, bg="white")
 
 # Metric comparisons by location -----------------------------------------
 #
-# Long-format metrics + PCs, each rescaled to 0-1 for a common axis, compared
-# between locations within each timing via Wilcoxon tests (significance stars).
-# comparisons.png.
-
-
-pca_long <- pca_df %>%
-  pivot_longer(c(mpr, ms, auc, PC1, PC2, PC3), names_to="metric") %>%
-  mutate(metric = factor(metric, levels=c("mpr", "ms", "auc", "PC1", "PC2", "PC3")))
-
-
 # Logistic smooth of each metric against location (diagnostic, not exported):
 # how well each metric separates Core vs. negative site.
 pca_df %>%
@@ -329,8 +322,6 @@ pca_df %>%
 # For each metric x timing, build an ROC curve for discriminating Core vs.
 # negative site and record the AUC (with CI). The curves are overlaid per
 # timing to compare which metric discriminates best. roc.png.
-
-
 get_rocs <- function(m, t, df) {
     temp_df <- df %>%
       filter(
@@ -345,6 +336,13 @@ get_rocs <- function(m, t, df) {
         auc = ci.auc(temp_df)[[2]]
       )
 }
+
+# Long-format metrics + PCs, each rescaled to 0-1 for a common axis, compared
+# between locations within each timing via Wilcoxon tests (significance stars).
+# comparisons.png.
+pca_long <- pca_df %>%
+  pivot_longer(c(mpr, ms, auc, PC1, PC2, PC3), names_to="metric") %>%
+  mutate(metric = factor(metric, levels=c("mpr", "ms", "auc", "PC1", "PC2", "PC3")))
 
 var_list <- expand.grid(m = unique(pca_long$metric), t = unique(pca_long$timing))
 roc_df <- pmap_dfr(var_list, get_rocs, df=pca_long)
@@ -376,29 +374,71 @@ ggsave("roc.png", path="figures/ppe", width=12, height=12)
 # Wilcoxon tests. timing_box and location_box are also stacked into a single
 # labelled A/B panel (boxplots.png), and PC1 is compared across boot side.
 
+sl_pvals <- pca_df %>%
+  summarize(
+    p.value = wilcox.test(PC1 ~ surface_location)$p.value,
+    .by = c(location, timing)
+  ) %>%
+  mutate(
+    label = paste("p =", signif(p.value, 2)),
+    xmin  = ifelse(location == "Negative Site", 0.875, 1.125),
+    xmax  = ifelse(location == "Negative Site", 1.875, 2.125),
+    y     = ifelse(location == "Negative Site", 5.5, 6.5),
+    color = ifelse(p.value < 0.05, "darkred", "black")
+  )
+
+location_pvals2 <- pca_df %>%
+  na.omit() %>%
+  summarize(
+    p.value = wilcox.test(PC1 ~ location)$p.value,
+    .by = c(timing, surface_location)
+  ) %>%
+  mutate(
+    label = paste("p =", signif(p.value, 2)),
+    y     = 9,
+    color = ifelse(p.value < 0.05, "darkred", "black")
+  )
+location_pvals2
 
 # PC1 by boot side (top vs. bottom), faceted by timing. surface-location_box.png.
 pca_df %>%
   filter(!is.na(surface_location)) %>%
-  ggplot(aes(surface_location, PC1, fill = timing, group=surface_location)) +
-  geom_boxplot(show.legend=FALSE, outliers = FALSE) +
-  geom_dotplot(
-    show.legend=FALSE, binaxis="y", stackdir="center",
-    dotsize=0.2, stackratio=0.3, color="#333", fill="#333",
-    position=position_jitter(0.01, 0.1), alpha=0.25
-  ) +
-  stat_compare_means(
-    method = "wilcox.test",
-    comparisons = sl_comps, label = "p.format",
-    bracket.size = 0.5, size = 6, show.legend = FALSE,
-  ) +
+  ggplot(aes(surface_location, PC1, fill=location, color = location)) +
+  geom_point(position=position_jitterdodge(0.3, 0, dodge_amt)) +
+  geom_boxplot(outliers = FALSE, color="black") +
   scale_fill_manual(values = c("darkcyan", "darkorange")) +
+  scale_color_manual(values = c("darkcyan", "darkorange")) +
+  new_scale_color() +
+  geom_text(# Location Comparisons
+    aes(x = surface_location, y = y, label = label, color = color),
+    data = location_pvals2, inherit.aes = FALSE, size = 5, fontface = "bold"
+  ) +
+  geom_text(# Timing Comparisons
+    aes(x = (xmin + xmax) / 2, y = y + 0.3, label = label, color = color),
+    data = sl_pvals, inherit.aes = FALSE, size = 5, fontface = "bold"
+  ) +
+  geom_segment(
+    aes(x = xmin, xend = xmax, y = y, yend = y, color = color),
+    data = sl_pvals, inherit.aes = FALSE, linewidth = 0.5
+  ) +
+  geom_segment(
+    aes(x = xmin, xend = xmin, y = y - 0.2, yend = y, color = color),
+    data = sl_pvals, inherit.aes = FALSE, linewidth = 0.5
+  ) +
+  geom_segment(
+    aes(x = xmax, xend = xmax, y = y - 0.2, yend = y, color = color),
+    data = sl_pvals, inherit.aes = FALSE, linewidth = 0.5
+  ) +
+  scale_color_identity() +
   facet_grid(cols = vars(timing)) +
+  labs(
+    x = "Surface Location"
+  ) +
   guides(color = guide_legend(override.aes = list(alpha = 1))) +
   main_theme +
   theme(
     legend.title = element_blank(),
-    legend.position = "top",
+    legend.position = "bottom",
     axis.title.x = element_blank(),
   )
-ggsave("surface-location_box.png", path = "figures/ppe", width = 12, height = 8)
+ggsave("surface-location_box.png", path = "figures/ppe", width = 8, height = 8)
