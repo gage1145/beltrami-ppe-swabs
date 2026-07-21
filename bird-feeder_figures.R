@@ -26,6 +26,7 @@ library(skimr)     # skim
 library(broom)     # tidy, glance
 library(ggpubr)    # ggarrange, stat_cor, stat_compare_means
 library(magrittr)  # %T>% (tee pipe)
+library(Rdimtools)  # supervised pca
 
 
 main_theme <- theme(
@@ -57,73 +58,24 @@ df_ <- read.csv("data/bird-feeder/data.csv", check.names = FALSE) %>%
     across(c(mpr, ms, auc, raf, ttt), as.numeric),
     across(c(sample_ids:reader, feeder:side, site), as.factor),
     across(start_date:end_date, as.Date),
-    across(c(time_in_env, time_since_start), ~ as.difftime(., units = "days"))
-  )
-
-skim(df_)
-
-
-# Principal Component Analysis -------------------------------------------
-#
-# Collapse the three log-metrics into principal components. PC1 is the shared
-# "amount of signal" axis used as the contamination score below. Scores are
-# appended to the data, along with the sampling year derived from end_date.
-
-
-pca_res <- df_ %>%
-  select(mpr, ms, auc) %>%
-  mutate(across(everything(), log)) %>%
-  prcomp(scale. = TRUE)
-summary(pca_res)
-
-pca_df <- df_ %>%
-  bind_cols(pca_res$x) %>%
-  mutate(
+    across(c(time_in_env, time_since_start), ~ as.difftime(., units = "days")),
     year = as.factor(year(end_date)),
   )
 
-pca_long <- pca_df %>%
-  mutate(row_id = row_number()) %>%
-  pivot_longer(c("mpr", "ms", "auc", "PC1", "PC2", "PC3"), names_to = "metric", values_to = "value")
+df_ %<>%
+  mutate(
+    site_pca = do.spc(select(df_, mpr, ms, auc),
+      pull(df_, site),
+      1
+    )$Y
+  )
 
-
-# PCA score scatter ------------------------------------------------------
-#
-# Scatter of each PC pair, points coloured by whether the sample came from a
-# negative control site, with a 99% k-means cluster ellipse. Shows whether the
-# contaminated sites separate from the controls in PC space. pca.png.
-
-
-pca_combos <- as.data.frame(t(combn(paste0("PC", seq(length(pca_res$scale))), 2)))
-colnames(pca_combos) <- c("x", "y")
-
-make_pca_plot <- function(x, y, alpha=0.5) {
-  cls <- pca_df %>%
-    select(!!sym(x), !!sym(y)) %>%
-    kmeans(centers=2, trace=TRUE) %T>%
-    summary()
-  pca_df %>%
-    mutate(
-      cluster = as.character(cls$cluster),
-      control = ifelse(control, "Negative Site", "Dump Site/Perimeter")
-    ) %>%
-    arrange(control) %>%
-    ggplot(aes(x = !!sym(x), y = !!sym(y))) +
-    geom_point(aes(color=control), alpha = alpha, size=3) +
-    stat_ellipse(aes(fill=cluster), level=0.99, geom="polygon", alpha=0, type="t", color="black", show.legend = FALSE) +
-    scale_color_manual(values=c("darkorange", "darkcyan")) +
-    scale_fill_manual(values=c("darkorange", "darkcyan")) +
-    coord_fixed() +
-    labs(
-      x = toupper(x),
-      y = toupper(y)
-    ) +
-    main_theme
-}
-
-pca_plots <- pmap(pca_combos, make_pca_plot)
-ggarrange(plotlist = pca_plots, align = "hv", ncol=3, common.legend = TRUE, legend="bottom")
-ggsave("pca.png", path = "figures/bird-feeder", bg="white", width = 16, height = 4)
+df_long <- df_ %>%
+  pivot_longer(
+    cols = c(mpr, ms, auc, site_pca),
+    names_to = "metric",
+    values_to = "value"
+  )
 
 
 # Summary / group comparisons --------------------------------------------
@@ -134,7 +86,7 @@ ggsave("pca.png", path = "figures/bird-feeder", bg="white", width = 16, height =
 # significance annotations used downstream. The figures focus on PC1.
 
 
-df_sum <- pca_long %>%
+df_sum <- df_long %>%
   summarize(
     across(c(value), mean),
     n = n(),
@@ -142,13 +94,13 @@ df_sum <- pca_long %>%
   ) %>%
   filter(!control, time_in_env > 0)
 
-df_neg <- pca_long %>%
+df_neg <- df_long %>%
   filter(control)
 
 df_neg_sum <- df_neg %>%
   summarize(neg_mean = mean(value), neg_sd = sd(value), .by = metric)
 
-df_site <- pca_long %>%
+df_site <- df_long %>%
   filter(!control, time_in_env > 0)
 
 groupings <- expand.grid(
@@ -169,9 +121,7 @@ get_comps <- function(m, st, sd, tss) {
     mpr = df_neg_sum$neg_mean[df_neg_sum$metric == "mpr"],
     ms  = df_neg_sum$neg_mean[df_neg_sum$metric == "ms"],
     auc = df_neg_sum$neg_mean[df_neg_sum$metric == "auc"],
-    PC1 = df_neg_sum$neg_mean[df_neg_sum$metric == "PC1"],
-    PC2 = df_neg_sum$neg_mean[df_neg_sum$metric == "PC2"],
-    PC3 = df_neg_sum$neg_mean[df_neg_sum$metric == "PC3"]
+    pca = df_neg_sum$neg_mean[df_neg_sum$metric == "site_pca"]
   )
 
   tidy(wilcox.test(temp$value, temp_neg$value, alternative = "greater", exact = FALSE)) %>%
@@ -196,7 +146,7 @@ comps <- pmap_dfr(groupings, get_comps)
 # plotted with a smooth and correlation labels. pca_vs_tss.png.
 
 # The time-trend figures use PC1, relative to the mean negative-control PC1.
-fig_metric <- "PC1"
+fig_metric <- "site_pca"
 neg_value <- df_neg_sum$neg_mean[df_neg_sum$metric == fig_metric]
 
 # Established sentinels only: long-deployed (>700 days since start),
@@ -211,7 +161,7 @@ filter_for_fig <- function(df) {
     )
 }
 
-mods <- pca_long %>%
+mods <- df_long %>%
   filter_for_fig() %>%
   nest(.by = c(site)) %>%
   mutate(
@@ -223,7 +173,7 @@ write.csv(select(mods, -c(data, model)), "data/bird-feeder/tss_results.csv")
 
 # Build the plotting frame once so the same rows feed both the plot and the
 # per-time-point comparisons below.
-fig_data <- pca_long %>%
+fig_data <- df_long %>%
   filter_for_fig() %>%
   mutate(
     site = factor(site, levels = c("dump site", "perimeter"), labels = c("Dump Site", "Perimeter")),
@@ -264,8 +214,8 @@ fig_data %>%
     data = year_comps,
     size = 5, fontface = "bold", show.legend = FALSE
   ) +
-  scale_x_continuous(breaks = seq(2023, 2025)) +
-  scale_y_continuous(breaks = seq(-2, 7), limits=c(NA, 6)) +
+  # scale_x_continuous(breaks = seq(2023, 2025)) +
+  # scale_y_continuous(breaks = seq(-2, 7), limits=c(NA, 6)) +
   scale_fill_manual(values = c("darkorange", "darkcyan")) +
   scale_color_manual(values = c("darkorange", "darkcyan")) +
   labs(
@@ -291,7 +241,7 @@ ggsave("pca_vs_tss.png", path = "figures/bird-feeder", width = 12, height = 8)
 # PC1 is negated so larger bars mean more signal. plate_cols.png.
 
 
-pca_plates <- pca_df %>%
+pca_plates <- df_ %>%
   filter(
     str_detect(feeder, "BF"),
     time_in_env > 0
@@ -300,37 +250,37 @@ pca_plates <- pca_df %>%
 # Per-plate and per-site mean PC1 (negated) with standard deviations.
 plate_sum <- pca_plates %>%
   summarize(
-    across(PC1, c(mean=~-mean(.), stdev=sd)),
+    across(site_pca, c(mean=~-mean(.), stdev=sd)),
     .by = c(feeder, year, site)
   )
 
 site_sum <- pca_plates %>%
   summarize(
-    across(PC1, c(mean=~-mean(.), stdev=sd)),
+    across(site_pca, c(mean=~-mean(.), stdev=sd)),
     .by = c(year, site)
   )
 
 plate_sum %>%
-  ggplot(aes(site, PC1_mean)) +
+  ggplot(aes(site, site_pca_mean)) +
   geom_col(aes(fill=feeder, group=site)) +
   geom_point(
-    aes(site, PC1_mean, group=site),
+    aes(site, site_pca_mean, group=site),
     data=site_sum, inherit.aes = FALSE, position = position_dodge(0.9), shape="square", size=3
   ) +
   geom_errorbar(
-    aes(site, PC1_mean, ymin=PC1_mean - PC1_stdev, ymax=PC1_mean + PC1_stdev, group=site),
+    aes(site, site_pca_mean, ymin=site_pca_mean - site_pca_stdev, ymax=site_pca_mean + site_pca_stdev, group=site),
     data=site_sum, inherit.aes = FALSE, position = position_dodge(0.9), width=0.2
   ) +
   geom_hline(yintercept=0, linetype="dashed", linewidth=1) +
   stat_compare_means(
-    aes(site, PC1),
+    aes(site, site_pca),
     data = pca_plates,
     method = "wilcox.test",
-    label.y.npc = 1, label.x.npc=0.5, hjust=0.5,
+    label.y.npc = 0.5, label.x.npc=0.5, hjust=0.5,
     label = "p.format", size = 6, show.legend = FALSE
   ) +
   facet_grid(cols=vars(year)) +
-  scale_y_continuous(limits=c(NA, 6.4)) +
+  scale_y_continuous(breaks = seq(-400, 400, 100)) +
   labs(
     y="PC1"
   ) +
