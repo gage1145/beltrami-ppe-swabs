@@ -212,15 +212,9 @@ filter_for_fig <- function(df) {
     )
 }
 
-mods <- pca_long %>%
-  filter_for_fig() %>%
-  nest(.by = c(site)) %>%
-  mutate(
-    model = map(data, ~ lm(value ~ time_since_start, data = .x)),
-    glanced = map(model, broom::glance)
-  ) %>%
-  unnest(c(glanced))
-write.csv(select(mods, -c(data, model)), "data/bird-feeder/tss_results.csv")
+
+# PC1 vs TSS Plot --------------------------------------------------------
+
 
 # Build the plotting frame once so the same rows feed both the plot and the
 # per-time-point comparisons below.
@@ -228,8 +222,19 @@ fig_data <- pca_long %>%
   filter_for_fig() %>%
   mutate(
     site = factor(site, levels = c("dump site", "perimeter"), labels = c("Dump Site", "Perimeter")),
-    year = as.integer(as.character(year))
+    year = as.integer(as.character(year)),
+    time_since_start = as.integer(time_since_start),
+    time_in_env = ifelse(time_in_env < 400, 365, time_in_env)
   )
+
+tss_mods <- fig_data %>%
+  nest(.by = c(site)) %>%
+  mutate(
+    model = map(data, ~ lm(value ~ time_since_start, data = .x)),
+    glanced = map(model, broom::glance)
+  ) %>%
+  unnest(c(glanced))
+write.csv(select(tss_mods, -c(data, model)), "data/bird-feeder/tss_results.csv")
 
 # Negative-site signal as plotted: negated PC1, so larger = more signal. The
 # negative site has a single visit, so its points are pooled and reused as the
@@ -242,7 +247,7 @@ neg_sd     <- sd(neg_signal)
 year_comps <- fig_data %>%
   summarize(
     p.value = wilcox.test(neg_signal, value, exact = FALSE, alternative="greater")$p.value,
-    .by = c(site, year)
+    .by = c(site, time_since_start)
   ) %>%
   mutate(
     label = sprintf("p = %.3g", p.value),
@@ -250,47 +255,108 @@ year_comps <- fig_data %>%
   )
 
 fig_data %>%
-  ggplot(aes(x = year, y = neg_value - value, color=site, fill=site)) +
+  ggplot(aes(x = time_since_start, y = neg_value - value, color=site, fill=site)) +
   annotate("rect", xmin = -Inf, xmax = Inf, ymin = -neg_sd, ymax = neg_sd, 
            fill = "blue", alpha = 0.05) +
   geom_hline(yintercept = 0, linetype = "dashed", linewidth = 1.2, color="blue") +
-  geom_point(size=3, position=position_jitterdodge(0.04, 0, 0.1, seed=56543)) +
+  geom_point(size=3, position=position_jitterdodge(10, 0, 20, seed=56543)) +
   geom_smooth(method="lm",linewidth=1.5, alpha=0.5) +
   stat_cor(
     aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")),
     size = 5, label.x.npc=c(0.25, 0.75), label.y=6, show.legend = FALSE, hjust = 0.5
   ) +
   geom_text(
-    aes(x = year, y = y, label = label, group = site),
+    aes(x = time_since_start, y = y, label = label, group = site),
     data = year_comps,
     size = 5, fontface = "bold", show.legend = FALSE
   ) +
-  scale_x_continuous(breaks = seq(2023, 2025)) +
+  scale_x_continuous(breaks = seq(750, 1500, 125)) +
   scale_y_continuous(breaks = seq(-2, 7), limits=c(NA, 6)) +
   scale_fill_manual(values = c("darkorange", "darkcyan")) +
   scale_color_manual(values = c("darkorange", "darkcyan")) +
   labs(
-    # x = "Year of Sampling",
+    x = "Days Since Start",
     y = "PC1 - mean Neg PC1"
   ) +
   main_theme +
   theme(
     axis.text = element_text(size = 16),
     axis.title = element_text(size = 20),
-    axis.title.x = element_blank(),
+    # axis.title.x = element_blank(),
     strip.text = element_text(size = 20),
     legend.title = element_blank(),
     legend.text = element_text(size = 16),
-    legend.position = "bottom"
+    legend.background = element_blank(),
+    legend.position = "inside",
+    legend.position.inside = c(0.75, 0.75)
   )
 ggsave("pca_vs_tss.png", path = "figures/bird-feeder", width = 12, height = 8)
 
 
-# PC1 by plate -----------------------------------------------------------
-#
-# Mean PC1 per individual feeder plate, stacked within each site and faceted by
-# year, with site-level means/error bars and a Wilcoxon site comparison.
-# PC1 is negated so larger bars mean more signal. plate_cols.png.
+# PC1 vs TIE Plot --------------------------------------------------------
+
+
+tie_mods <- fig_data %>%
+  nest(.by = c(site)) %>%
+  mutate(
+    model = map(data, ~ lm(value ~ time_in_env, data = .x)),
+    glanced = map(model, broom::glance)
+  ) %>%
+  unnest(c(glanced))
+write.csv(select(tie_mods, -c(data, model)), "data/bird-feeder/tie_results.csv")
+
+time_in_env_comps <- fig_data %>%
+  summarize(
+    p.value = wilcox.test(neg_signal, value, exact = FALSE, alternative="greater")$p.value,
+    .by = c(time_in_env)
+  ) %>%
+  mutate(
+    point = factor(time_in_env, levels = unique(time_in_env), labels = paste(unique(time_in_env), "days")),
+    label = sprintf("p = %.3g", p.value),
+    y = 5.6,
+  )
+
+fig_data %>%
+  mutate(
+    time_in_env = as.integer(time_in_env),
+    point = factor(time_in_env, levels = unique(time_in_env), labels = paste(unique(time_in_env), "days"))
+  ) %>%
+  ggplot(aes(x = time_in_env, y = neg_value - value)) +
+  annotate("rect", xmin = -Inf, xmax = Inf, ymin = -neg_sd, ymax = neg_sd, 
+           fill = "blue", alpha = 0.05) +
+  geom_hline(yintercept = 0, linetype = "dashed", linewidth = 1.2, color="blue") +
+  geom_point(aes(color = point),size=3, position=position_jitterdodge(0.04, 0, 0.1, seed=56543)) +
+  geom_smooth(method="lm", linewidth=1.5, alpha=0.5) +
+  stat_cor(
+    aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")),
+    size = 5, color="blue", label.x.npc=0.5, label.y=6, show.legend = FALSE, hjust = 0.5
+  ) +
+  geom_text_repel(
+    aes(x = time_in_env, y = y, label = label, color = point),
+    data = time_in_env_comps, direction = "x", force = 0.1, hjust = 0.5,
+    size = 5, fontface = "bold", show.legend = FALSE
+  ) +
+  scale_x_continuous(breaks = seq(300, 1500, 300), limits = c(300, 1500)) +
+  scale_y_continuous(breaks = seq(-2, 7), limits=c(NA, 6)) +
+  labs(
+    x = "Days in Environment",
+    y = "PC1 - mean Neg PC1"
+  ) +
+  main_theme +
+  theme(
+    axis.text = element_text(size = 16),
+    axis.title = element_text(size = 20),
+    strip.text = element_text(size = 20),
+    legend.title = element_blank(),
+    legend.background = element_blank(),
+    legend.text = element_text(size = 16),
+    legend.position = "inside",
+    legend.position.inside = c(0.75, 0.75)
+  )
+ggsave("pca_vs_tie.png", path = "figures/bird-feeder", width = 12, height = 8)
+
+
+# Plots by plate ---------------------------------------------------------
 
 
 pca_plates <- pca_df %>%
@@ -317,11 +383,11 @@ site_sum <- pca_plates %>%
     color = ifelse(p.value < 0.05, "darkred", "black")
   )
 
-year_sum <- pca_plates %>%
-  summarize(
-    p.value = pairwise.wilcox.test(PC1, year, p.adjust.method = "bonferroni", exact = FALSE)$p.value,
-    .by = c(site)
-  ) 
+# year_sum <- pca_plates %>%
+#   summarize(
+#     p.value = pairwise.wilcox.test(PC1, year, p.adjust.method = "bonferroni", exact = FALSE)$p.value,
+#     .by = c(site)
+#   ) 
 
 df_pairwise <- pca_plates %>%
   select(PC1, year, site) %>%
@@ -390,4 +456,4 @@ pca_plates %>%
     legend.title = element_blank(),
     legend.position = "bottom"
   )
-ggsave("plate_cols.png", path="figures/bird-feeder", width=12, height=10)
+# ggsave("plate_cols.png", path="figures/bird-feeder", width=12, height=10)
