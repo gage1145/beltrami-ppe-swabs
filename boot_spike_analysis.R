@@ -65,7 +65,6 @@ std_curve <- data.frame(
 
 predictions <- unknowns %>%
   mutate(
-    # predicted = preds,
     real_auc = AUC,
     AUC = preds,
     loss = real_auc - AUC,
@@ -104,7 +103,7 @@ df_standard %>%
   geom_point(
     aes(x = real_dilutions, y = AUC, color = dil_factors),
     predictions,
-    size = 3, show.legend = FALSE
+    size = 3, show.legend = T
   ) +
   geom_errorbar(
     aes(x = Dilutions, ymin = real_auc - sd_AUC, ymax = real_auc + sd_AUC, color = dil_factors),
@@ -128,7 +127,15 @@ df_standard %>%
   xlab("Log Dilution Factor") +
   ylab("Area Under the Curve") +
   main_theme +
+  labs(
+    color = "Spike Dilution Factor"
+  ) +
   theme(
+    legend.position = "inside",
+    legend.position.inside = c(.9, .25),
+    legend.background = element_blank(),
+    legend.direction = "horizontal",
+    legend.justification = 1,
     panel.grid = element_line(colour = "lightgrey"),
   )
 

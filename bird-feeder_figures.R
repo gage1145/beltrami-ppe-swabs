@@ -21,12 +21,14 @@
 
 
 library(tidyverse)
-library(janitor)   # clean_names
-library(skimr)     # skim
-library(broom)     # tidy, glance
-library(ggpubr)    # ggarrange, stat_cor, stat_compare_means
+library(janitor)   
+library(skimr)     
+library(broom)     
+library(ggpubr)   
+library(ggrepel)
 library(ggnewscale)
-library(magrittr)  # %T>% (tee pipe)
+library(magrittr)  
+library(plotly)
 
 
 main_theme <- theme(
@@ -58,10 +60,10 @@ df_ <- read.csv("data/bird-feeder/data.csv", check.names = FALSE) %>%
     across(c(mpr, ms, auc, raf, ttt), as.numeric),
     across(c(sample_ids:reader, feeder:side, site), as.factor),
     across(start_date:end_date, as.Date),
-    across(c(time_in_env, time_since_start), ~ as.difftime(., units = "days"))
+    across(c(time_in_env, time_since_start), ~ as.difftime(., units = "days")),
+    feeder = str_replace_all(feeder, "BF", "S"),
+    time_since_start = ifelse(time_since_start == 699, 760, time_since_start)
   )
-
-skim(df_)
 
 
 # Principal Component Analysis -------------------------------------------
@@ -73,14 +75,26 @@ skim(df_)
 
 pca_res <- df_ %>%
   select(mpr, ms, auc) %>%
-  # mutate(across(everything(), log)) %>%
+  mutate(across(everything(), log)) %>%
   prcomp(scale. = TRUE)
-summary(pca_res)
+pca_sum <- summary(pca_res)
+
+pc_lookup <- c(
+  paste0("PC1", "(", round(100 * pca_sum$importance[2, "PC1"], 1), "%)") = PC1,
+  paste0("PC2", "(", round(100 * pca_sum$importance[2, "PC2"], 1), "%)") = PC2,
+  paste0("PC3", "(", round(100 * pca_sum$importance[2, "PC3"], 1), "%)") = PC3
+)
+
+get_pc_lab <- function(pc) paste0(paste0(pc, "(", round(100 * pca_sum$importance[2, pc], 1), "%)"))
 
 pca_df <- df_ %>%
   bind_cols(pca_res$x) %>%
   mutate(
     year = as.factor(year(end_date)),
+  ) %>%
+  rename_with(
+    ~ paste0(.x, "(", round(100 * pca_sum$importance[2, .x], 1), "%)"),
+    starts_with("PC")
   )
 
 pca_long <- pca_df %>%
@@ -95,7 +109,10 @@ pca_long <- pca_df %>%
 # contaminated sites separate from the controls in PC space. pca.png.
 
 
-pca_combos <- as.data.frame(t(combn(paste0("PC", seq(length(pca_res$scale))), 2)))
+pca_combos <- as.data.frame(t(combn(paste0("PC", seq(length(pca_res$scale))), 2))) %>%
+  mutate(
+    across(everything(), ~ paste0(., "(", round(100 * pca_sum$importance[2, as.integer(str_remove(., "PC"))], 1), "%)"))
+  )
 colnames(pca_combos) <- c("x", "y")
 
 make_pca_plot <- function(x, y, alpha=0.5) {
@@ -106,26 +123,32 @@ make_pca_plot <- function(x, y, alpha=0.5) {
   pca_df %>%
     mutate(
       cluster = as.character(cls$cluster),
-      control = ifelse(control, "Negative Site", "Dump Site/Perimeter")
+      site = factor(site, levels = c("dump site", "perimeter"), labels = c("Core", "Perimeter")),
     ) %>%
-    arrange(control) %>%
+    filter(!control) %>%
+    # arrange(control) %>%
     ggplot(aes(x = !!sym(x), y = !!sym(y))) +
-    geom_point(aes(color=control), alpha = alpha, size=3) +
+    geom_point(aes(color=site), alpha = alpha, size=3) +
     stat_ellipse(aes(fill=cluster), level=0.99, geom="polygon", alpha=0, type="t", color="black", show.legend = FALSE) +
     scale_color_manual(values=c("darkorange", "darkcyan")) +
     scale_fill_manual(values=c("darkorange", "darkcyan")) +
-    coord_fixed() +
+    facet_grid(cols=vars(time_since_start)) +
+    scale_x_continuous(n.breaks=3) +
+    # coord_fixed() +
     labs(
       x = toupper(x),
       y = toupper(y)
     ) +
-    main_theme
+    main_theme +
+    theme(
+      legend.position="none"
+    )
 }
 
 pca_plots <- pmap(pca_combos, make_pca_plot)
-ggarrange(plotlist = pca_plots, align = "hv", ncol=3, common.legend = TRUE, legend="bottom")
-ggsave("pca.png", path = "figures/bird-feeder", bg="white", width = 16, height = 4)
-
+pca_plot <- ggarrange(plotlist = pca_plots, align = "hv", ncol=1, common.legend = FALSE) 
+# ggsave("pca.png", path = "figures/bird-feeder", bg="white", width = 12, height = 20)
+pca_plot
 
 # Summary / group comparisons --------------------------------------------
 #
@@ -133,6 +156,57 @@ ggsave("pca.png", path = "figures/bird-feeder", bg="white", width = 16, height =
 # pooled negative-control distribution with a one-sided Wilcoxon test
 # (greater). comps holds the per-group test results; these feed the
 # significance annotations used downstream. The figures focus on PC1.
+
+
+df_sum <- pca_df %>%
+  filter(!control) %>%
+  mutate(
+    time_since_start = as.factor(time_since_start),
+    site = factor(site, levels = c("dump site", "perimeter"), labels = c("Core", "Perimeter")),
+  ) %>%  summarize(n=n(), .by=c(site, time_since_start)) %>%
+  mutate(y = ifelse(site=="Core", 2.2, 1.7))
+
+pc_box <- pca_df %>%
+  filter(!control) %>%
+  select(PC1, site, time_since_start) %>%
+  mutate(
+    time_since_start = as.factor(time_since_start),
+    site = factor(site, levels = c("dump site", "perimeter"), labels = c("Core", "Perimeter")),
+  ) %>%
+  ggplot(aes(time_since_start, PC1, fill=site, color=site)) +
+  geom_hline(yintercept = 0, linetype="dashed", color="gray50", linewidth=1) +
+  geom_boxplot(position=position_dodge(0.7), outlier.shape=NA,  color="black", width=0.4) +
+  geom_text(
+    aes(label = paste("n =", n), group = time_since_start, y=y), fontface = "bold",
+    data = df_sum, position = position_dodge(0.7), size=5, vjust=0.5, show.legend=FALSE
+  ) +
+  stat_compare_means(
+    aes(group=site, label = paste0("p = ", after_stat(p.format))),
+    size=4, vjust=0.5, fontface="bold", show.legend=FALSE
+  ) +
+  scale_y_continuous(limits=c(-5, 2.7)) +
+  scale_color_manual(values=c("darkorange", "darkcyan")) +
+  scale_fill_manual(values=c("darkorange", "darkcyan")) +
+  labs(
+    x = "Days Since Start",
+    y = "PC1"
+  ) +
+  main_theme +
+  theme(
+    legend.title = element_blank(),
+    legend.position = "top",
+    legend.text = element_text(size=24),
+    legend.key.size = unit(1, "cm"),
+    # axis.title.x = element_blank()
+  )
+pc_box
+
+ggarrange(
+  pca_plot, pc_box, ncol = 2, common.legend = TRUE, legend="bottom", labels = c("A", "B"),
+  font.label = list(size = 24), widths = c(3,2)
+)
+
+ggsave("pca_plot.png", path="figures/bird-feeder", width = 12, height = 10, bg="white")
 
 
 df_sum <- pca_long %>%
@@ -147,7 +221,7 @@ df_neg <- pca_long %>%
   filter(control)
 
 df_neg_sum <- df_neg %>%
-  summarize(neg_mean = mean(value), neg_sd = sd(value), .by = metric)
+  summarize(neg_mean = median(value), neg_sd = sd(value), .by = metric)
 
 df_site <- pca_long %>%
   filter(!control, time_in_env > 0)
@@ -205,10 +279,18 @@ neg_value <- df_neg_sum$neg_mean[df_neg_sum$metric == fig_metric]
 filter_for_fig <- function(df) {
   df %>%
     filter(
-      time_since_start > 700,
+      # time_since_start > 700,
+      time_since_start > 0,
       !control,
       metric == fig_metric,
       !reextracted
+    ) %>%
+    mutate(
+      time_since_start = ifelse(time_since_start == 699, 760, time_since_start),
+      site = factor(site, levels = c("dump site", "perimeter"), labels = c("Core", "Perimeter")),
+      year = as.integer(as.character(year)),
+      time_since_start = as.integer(time_since_start),
+      time_in_env = ifelse(time_in_env < 400, 365, time_in_env)
     )
 }
 
@@ -219,13 +301,7 @@ filter_for_fig <- function(df) {
 # Build the plotting frame once so the same rows feed both the plot and the
 # per-time-point comparisons below.
 fig_data <- pca_long %>%
-  filter_for_fig() %>%
-  mutate(
-    site = factor(site, levels = c("dump site", "perimeter"), labels = c("Dump Site", "Perimeter")),
-    year = as.integer(as.character(year)),
-    time_since_start = as.integer(time_since_start),
-    time_in_env = ifelse(time_in_env < 400, 365, time_in_env)
-  )
+  filter_for_fig()
 
 tss_mods <- fig_data %>%
   nest(.by = c(site)) %>%
@@ -251,7 +327,7 @@ year_comps <- fig_data %>%
   ) %>%
   mutate(
     label = sprintf("p = %.3g", p.value),
-    y = case_when(site == "Dump Site" ~ 5.6, TRUE ~ 5.1),
+    y = case_when(site == "Core" ~ 6.6, TRUE ~ 6.1),
   )
 
 fig_data %>%
@@ -263,7 +339,7 @@ fig_data %>%
   geom_smooth(method="lm",linewidth=1.5, alpha=0.5) +
   stat_cor(
     aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")),
-    size = 5, label.x.npc=c(0.25, 0.75), label.y=6, show.legend = FALSE, hjust = 0.5
+    size = 5, label.x.npc=c(0.25, 0.75), label.y=7, show.legend = FALSE, hjust = 0.5
   ) +
   geom_text(
     aes(x = time_since_start, y = y, label = label, group = site),
@@ -271,11 +347,11 @@ fig_data %>%
     size = 5, fontface = "bold", show.legend = FALSE
   ) +
   scale_x_continuous(breaks = seq(750, 1500, 125)) +
-  scale_y_continuous(breaks = seq(-2, 7), limits=c(NA, 6)) +
+  scale_y_continuous(breaks = seq(-2, 8), limits=c(NA, 7)) +
   scale_fill_manual(values = c("darkorange", "darkcyan")) +
   scale_color_manual(values = c("darkorange", "darkcyan")) +
   labs(
-    x = "Days Since Start",
+    x = "Days Since Project Start",
     y = "PC1 - mean Neg PC1"
   ) +
   main_theme +
@@ -313,10 +389,11 @@ time_in_env_comps <- fig_data %>%
   mutate(
     point = factor(time_in_env, levels = unique(time_in_env), labels = paste(unique(time_in_env), "days")),
     label = sprintf("p = %.3g", p.value),
-    y = 5.6,
+    y = 6.6,
   )
 
 fig_data %>%
+  arrange(time_in_env) %>%
   mutate(
     time_in_env = as.integer(time_in_env),
     point = factor(time_in_env, levels = unique(time_in_env), labels = paste(unique(time_in_env), "days"))
@@ -329,7 +406,7 @@ fig_data %>%
   geom_smooth(method="lm", linewidth=1.5, alpha=0.5) +
   stat_cor(
     aes(label = paste(..rr.label.., ..p.label.., sep = "~`,`~")),
-    size = 5, color="blue", label.x.npc=0.5, label.y=6, show.legend = FALSE, hjust = 0.5
+    size = 5, color="blue", label.x.npc=0.5, label.y=7, show.legend = FALSE, hjust = 0.5
   ) +
   geom_text_repel(
     aes(x = time_in_env, y = y, label = label, color = point),
@@ -337,7 +414,7 @@ fig_data %>%
     size = 5, fontface = "bold", show.legend = FALSE
   ) +
   scale_x_continuous(breaks = seq(300, 1500, 300), limits = c(300, 1500)) +
-  scale_y_continuous(breaks = seq(-2, 7), limits=c(NA, 6)) +
+  scale_y_continuous(breaks = seq(-2, 8), limits=c(NA, 7)) +
   labs(
     x = "Days in Environment",
     y = "PC1 - mean Neg PC1"
@@ -361,7 +438,7 @@ ggsave("pca_vs_tie.png", path = "figures/bird-feeder", width = 12, height = 8)
 
 pca_plates <- pca_df %>%
   filter(
-    str_detect(feeder, "BF"),
+    str_detect(feeder, "^S"),
     time_in_env > 0
   )
 

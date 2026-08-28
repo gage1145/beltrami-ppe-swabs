@@ -78,7 +78,7 @@ data <- read.csv("data/ppe/updated_metadata.csv", check.names = FALSE) %>%
     location = factor(
       location,
       levels = c("negative site", "dump site"),
-      labels = c("Negative Site", "Core Site")
+      labels = c("Negative Site", "Study Site")
     ),
     surface = as.factor(surface),
     surface_location = factor(
@@ -99,7 +99,7 @@ write.csv(data, "data/ppe/filtered_data.csv", row.names=FALSE)
 
 
 pca_data <- data %>%
-  summarize(across(c(mpr, ms, auc), median), .by = c(sample_id, location, timing, surface_location))
+  summarize(across(c(mpr, ms, auc), ~ median(log(.))), .by = c(sample_id, location, timing, surface_location))
 
 pca_res <- prcomp(~ mpr + ms + auc, data = pca_data, scale. = TRUE)
 pca_sum <- summary(pca_res)
@@ -309,7 +309,7 @@ ggsave("pca_plot.png", path="figures/ppe", width = 12, height = 10, bg="white")
 pca_df %>%
   mutate(across(c(mpr, ms, auc, PC1, PC2, PC3), ~ rescale(., c(0, 1)))) %>%
   # pivot_longer(c(mpr, ms, auc, PC1, PC2, PC3), names_to="metric") %>%
-  mutate(location = ifelse(location == "Core Site", 1, 0)) %>%
+  mutate(location = ifelse(location == "Study Site", 1, 0)) %>%
   ggplot(aes(PC1, location, color=timing, fill=timing)) +
   geom_point(position=position_jitter(0, 0.01), alpha=0.5) +
   stat_smooth(method="glm", se=TRUE, method.args=list(family="binomial"), fullrange = T) +

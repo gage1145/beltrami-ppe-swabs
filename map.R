@@ -42,6 +42,7 @@ df_ <- read.csv("data/bird-feeder/data.csv", check.names = FALSE) %>%
     across(c(sample_ids:reader, feeder:side, site), as.factor),
     across(start_date:end_date, as.Date),
     across(c(time_in_env, time_since_start), ~ as.difftime(., units = "days")),
+    feeder = str_replace(feeder, "BF", "S"),
     lat = rescale(lat, c(0, dim_ratio), c(47.69795, 47.70075)),
     long = rescale(long, c(0, 1), c(-94.65457, -94.64921)),
     time_since_start = ifelse(time_since_start == 699, 760, time_since_start),
@@ -93,29 +94,3 @@ df_ %>%
 
 ggsave("map.png", path="figures/bird-feeder", width=12, height=11)
 
-
-df_ %>%
-  arrange(pc1) %>%
-  ggplot(aes(long, lat, color=pc1)) +
-  background_image(site_img) +
-  geom_circle(aes(x0=long, y0=lat, r=0.05), color="white", linewidth=0.3) +
-  # geom_point(size=6, alpha=0.7, position=position_jitter(jitter_amt, jitter_amt, 10548237)) +
-  # geom_text_repel(
-  #   aes(label_x, label_y, label=feeder), 
-  #   data=df_sum, color = "white", size=6, fontface=2,
-  #   nudge_y=0.08, direction="x", min.segment.length = 10
-  # ) +
-  facet_wrap(vars(time_since_start)) +
-  scale_color_gradient2(low="lightblue", mid="darkorange", high="darkred", midpoint=0.6) +
-  scale_x_continuous(limits=c(0, 1)) +
-  scale_y_continuous(limits=c(0, dim_ratio)) +
-  coord_fixed() +
-  main_theme +
-  theme(
-    axis.title = element_blank(),
-    axis.ticks = element_blank(),
-    axis.text = element_blank(),
-    legend.position = "bottom",
-    legend.key.width = unit(5, "cm"),
-    legend.title = element_text(vjust = 1)
-  )
