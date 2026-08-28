@@ -72,10 +72,22 @@ skim(df_)
 
 
 pca_res <- df_ %>%
-  select(mpr, ms, auc) %>%
+  select(mpr, ms, auc) %T>%
   # mutate(across(everything(), log)) %>%
   prcomp(scale. = TRUE)
 summary(pca_res)
+
+# Correlation matrix
+df_ %>%
+  select(mpr, ms, auc) %>%
+  cor()
+
+# Linear regression
+met_mods <- list(
+  lm(mpr ~ ms + auc, data = df_),
+  lm(log(mpr) ~ log(ms) + log(auc), data = df_)
+) %>%
+  map_dfr(glance)
 
 pca_df <- df_ %>%
   bind_cols(pca_res$x) %>%
