@@ -78,7 +78,7 @@ data <- read.csv("data/ppe/updated_metadata.csv", check.names = FALSE) %>%
     location = factor(
       location,
       levels = c("negative site", "dump site"),
-      labels = c("Negative Site", "Study Site")
+      labels = c("Control Site", "Study Site")
     ),
     surface = as.factor(surface),
     surface_location = factor(
@@ -220,9 +220,9 @@ timing_pvals <- pca_df %>%
   ) %>%
   mutate(
     label = paste("p =", signif(p.value, 2)),
-    xmin  = ifelse(location == "Negative Site", 0.875, 1.125),
-    xmax  = ifelse(location == "Negative Site", 1.875, 2.125),
-    y     = ifelse(location == "Negative Site", 5.5, 6.5),
+    xmin  = ifelse(location == "Control Site", 0.875, 1.125),
+    xmax  = ifelse(location == "Control Site", 1.875, 2.125),
+    y     = ifelse(location == "Control Site", 5.5, 6.5),
     color = ifelse(p.value < 0.05, "darkred", "black")
   )
 
@@ -381,9 +381,9 @@ sl_pvals <- pca_df %>%
   ) %>%
   mutate(
     label = paste("p =", signif(p.value, 2)),
-    xmin  = ifelse(location == "Negative Site", 0.875, 1.125),
-    xmax  = ifelse(location == "Negative Site", 1.875, 2.125),
-    y     = ifelse(location == "Negative Site", 5.5, 6.5),
+    xmin  = ifelse(location == "Control Site", 0.875, 1.125),
+    xmax  = ifelse(location == "Control Site", 1.875, 2.125),
+    y     = ifelse(location == "Control Site", 5.5, 6.5),
     color = ifelse(p.value < 0.05, "darkred", "black")
   )
 
