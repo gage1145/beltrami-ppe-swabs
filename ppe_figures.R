@@ -400,8 +400,8 @@ location_pvals2 <- pca_df %>%
   )
 location_pvals2
 
-# PC1 by boot side (top vs. bottom), faceted by timing. surface-location_box.png.
-pca_df %>%
+# PC1 by boot side (top vs. bottom), faceted by timing. surface-location_box.jpg.
+sl_box <- pca_df %>%
   filter(!is.na(surface_location)) %>%
   ggplot(aes(surface_location, PC1, fill=location, color = location)) +
   geom_point(position=position_jitterdodge(0.3, 0, dodge_amt)) +
@@ -439,6 +439,59 @@ pca_df %>%
   theme(
     legend.title = element_blank(),
     legend.position = "bottom",
-    axis.title.x = element_blank(),
+    # axis.title.x = element_blank(),
   )
-ggsave("surface-location_box.png", path = "figures/ppe", width = 8, height = 8)
+sl_box
+ggsave("surface-location_box.jpg", path = "figures/ppe", width = 8, height = 8, dpi=600)
+
+# Surface Location Histogram ---------------------------------------------
+
+# Determine if values are normally distributed
+# Lets us know if we can use t.test or wilcox.test
+pc_bottom <- pca_df %>%
+  filter(surface_location == "Bottom") %>%
+  pull(PC1)
+pc_top <- pca_df %>%
+  filter(surface_location == "Top") %>%
+  pull(PC1)
+
+k_test <- ks.test(pc_bottom, pc_top, simulate.p.value = TRUE)
+wilcox_test <- wilcox.test(pc_bottom, pc_top)
+
+sl_hist <- pca_df %>%
+  filter(!is.na(surface_location)) %>%
+  ggplot(aes(PC1, after_stat(ndensity), fill=surface_location)) +
+  stat_bin(position="identity", alpha=0.5, color="black") +
+  annotate(
+    "text",
+    label = paste("Kolmogorov\tp =", signif(k_test$p.value, 2)), 
+    x=2.5, y=1, size = 6, vjust = 0.5, hjust=0
+  ) +
+  annotate(
+    "text",
+    label = paste("Mann-Whitney\tp =", signif(wilcox_test$p.value, 2)), 
+    x=2.5, y=0.95, size = 6, vjust = 0.5, hjust=0
+  ) +
+  scale_fill_manual(values = c("darkcyan", "darkorange")) +
+  scale_color_manual(values = c("darkcyan", "darkorange")) +
+  labs(
+    x = "PC1",
+    y = "Density",
+    fill = "Surface Location"
+  ) +
+  guides(fill = guide_legend(override.aes = list(alpha = 1))) +
+  main_theme +
+  theme(
+    # legend.title = element_blank(),
+    legend.position = "bottom",
+    legend.position.inside = c(0.9, 0.95),
+    legend.justification = c(0.5, 0.63),
+    legend.background = element_blank()
+  )
+sl_hist
+
+ggsave("surface-location_histogram.jpg", path = "figures/ppe", width = 12, height = 8, dpi=600)
+
+
+ggarrange(sl_box, sl_hist, ncol = 2, widths=c(1, 1.5), labels = c("A", "B"), font.label = list(size = 24))
+ggsave("surface-location_combined.jpg", path = "figures/ppe", width = 16, height = 12, bg="white", dpi=600)
