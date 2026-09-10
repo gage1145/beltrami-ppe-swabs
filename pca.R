@@ -53,39 +53,33 @@ df_log <- mutate(df_, across(mpr:auc, log))
 mprauc_plot <-  df_log %>%
     ggplot(aes(mpr, auc)) +
     geom_point(alpha=0.1) +
-    stat_smooth(method="lm", color="blue", linetype="dashed") +
-    stat_cor(aes(label = paste(after_stat(rr.label), after_stat(p.label), sep = "~`,`~")), label.y=6.8) +
+    # stat_smooth(method="loess", color="blue", linetype="dashed") +
+    stat_cor(aes(label = paste(after_stat(rr.label), after_stat(p.label), sep = "~`,`~")), label.y.npc=1) +
     labs(
-      fill = "Count"
+      x = "log(MPR)", y = "log(AUC)"
     ) +
     main_theme
 mprms_plot <- df_log %>%
     ggplot(aes(mpr, ms)) +
     geom_point(alpha=0.1) +
-    stat_smooth(method="lm", color="blue", linetype="dashed") +
-    stat_cor(aes(label = paste(after_stat(rr.label), after_stat(p.label), sep = "~`,`~")), label.y=3.4) +
+    # stat_smooth(method="loess", color="blue", linetype="dashed") +
+    stat_cor(aes(label = paste(after_stat(rr.label), after_stat(p.label), sep = "~`,`~")), label.y.npc=1) +
     labs(
-      fill = "Count"
+      x = "log(MPR)", y = "log(MS)"
     ) +
     main_theme
 msauc_plot <- df_log %>%
-    ggplot(aes(ms, auc)) +
-    geom_point(alpha=0.1) +
-    stat_smooth(method="lm", color="blue", linetype="dashed") +
-    stat_cor(aes(label = paste(after_stat(rr.label), after_stat(p.label), sep = "~`,`~")), label.y=6.8) +
+    ggplot(aes(auc, ms)) +
+    geom_point(alpha=0.2) +
+    # stat_smooth(method="loess", color="blue", linetype="dashed") +
+    stat_cor(aes(label = paste(after_stat(rr.label), after_stat(p.label), sep = "~`,`~")), label.y.npc=1) +
     labs(
-      fill = "Count"
+      x = "log(AUC)", y = "log(MS)"
     ) +
     main_theme
 
 ggarrange(mprauc_plot, mprms_plot, msauc_plot, ncol=3)
-ggsave("cor_log.png", path="figures/pca", width=12, height=6)
-
-
-df_ <- df_ %>%
-  mutate(across(mpr:auc, list(log=log)))
-
-write.csv(df_, "data/pca/combined.csv", row.names=FALSE)
+ggsave("cor_log.jpg", path="figures/pca", width=12, height=6, dpi=600)
 
 
 # Linear regression
