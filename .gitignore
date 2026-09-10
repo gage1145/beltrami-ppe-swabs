@@ -50,6 +50,8 @@ rsconnect/
 
 # Certain Images
 *.png
+*.jpg
+*.tif
 *.pdf
 !dump_site.png
 
