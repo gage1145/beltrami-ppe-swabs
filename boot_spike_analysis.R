@@ -2,171 +2,148 @@ library(quicR)
 library(tidyverse)
 
 
+# Main figure theme ------------------------------------------------------
 
-# file <- list.files("spike_raw", full.name=TRUE)[[1]]
-file <- "spike_raw/20250702_LW_BootRecovery2.xlsx"
 
-metrics <- get_quic(file) %>%
+main_theme <- theme(
+  plot.title = element_text(size = 30, hjust = 0.5),
+  axis.title = element_text(size = 20),
+  axis.text = element_text(size = 16),
+  strip.text = element_text(size = 20),
+  legend.title = element_text(size = 20, hjust = 0.5),
+  legend.text = element_text(size = 16),
+  panel.grid = element_blank()
+)
+
+
+# Load data --------------------------------------------------------------
+
+
+file <- "raw/spike_raw/20250702_LW_BootRecovery2.xlsx"
+
+df_ <- get_quic(file) %>%
   calculate_metrics("Sample IDs", "Dilutions", "Wells") %>%
-  mutate(Dilutions = -log10(as.numeric(Dilutions)))
-
-metrics %>%
-  filter(`Sample IDs` != "B",) %>%
-  mutate_at("Dilutions", as.factor) %>%
-  ggplot(aes(`Sample IDs`, RAF, fill=Dilutions)) +
-  geom_boxplot() +
-  scale_fill_manual(values=c("green", "orange", "cyan", "red", "blue")) +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)
+  separate_wider_delim(cols = c(`Sample IDs`), delim = "_", names = c("Sample IDs", "control"), too_few = "align_start") %>%
+  mutate(
+    Dilutions = -log10(as.numeric(Dilutions)),
+    control = !is.na(control)
   )
-ggsave("figures/recovery_RAF.png", width=8, height=8)
-write.csv(metrics, "spike_data/metrics.csv", row.names=FALSE)
+
+df_sum <- summarize(
+  df_,
+  sd_AUC = sd(AUC),
+  AUC = mean(AUC),
+  .by = c(`Sample IDs`, Dilutions, control)
+)
 
 
+# Generate standard curve ------------------------------------------------
+
+
+df_standard <- filter(df_sum, `Sample IDs` == "P", Dilutions != -3)
+
+model <- lm(AUC ~ Dilutions, data = df_standard)
+
+unknowns <- df_sum %>%
+  filter(!(`Sample IDs` %in% c("P", "N", "B")), !control) %>%
+  summarize(
+    sd_AUC = sd(AUC),
+    AUC = mean(AUC),
+    .by = Dilutions
+  )
+
+
+# Generate predictions ---------------------------------------------------
+
+
+preds <- predict(model, unknowns)
+
+std_curve <- data.frame(
+  Dilutions = seq(-8, -2, 0.01),
+  AUC = predict(model, list(Dilutions = seq(-8, -2, 0.01)))
+)
+
+predictions <- unknowns %>%
+  mutate(
+    real_auc = AUC,
+    AUC = preds,
+    loss = real_auc - AUC,
+    percent_recovery = (real_auc / AUC) * 100,
+    dil_factors = as.factor(Dilutions)
+  )
+
+get_pred_dil <- function(x) {
+  return(min(std_curve$Dilutions[std_curve$AUC >= x]))
+}
+dil_preds <- sapply(predictions$real_auc, get_pred_dil)
+
+predictions$real_dilutions <- predictions$Dilutions
+predictions$Dilutions <- dil_preds
 
 
 # Titration Curve ---------------------------------------------------------
 
 
+dotsize <- 6
 
-df_sum <- metrics %>%
-  group_by_at(1:2) %>%
-  summarize(
-    mean_RAF = mean(RAF),
-    median_RAF = median(RAF),
-    sd_RAF = sd(RAF)
-  )
-write.csv(df_sum, "spike_data/summary.csv", row.names = FALSE)
-
-df_ <- metrics %>%
-  filter(
-    `Sample IDs` == "P",
-    Dilutions != -3 # This dilution throws off the standard curve.
-  )
-
-model <- glm(
-  Dilutions ~ RAF,
-  data = df_
-) 
-  
-model_sum <- summary(model)
-
-r_square <- with(model, 1 - deviance / null.deviance)
-
-unknowns <- metrics %>%
-  filter(!(`Sample IDs` %in% c("P", "N", "B")))
-
-sample_names <- unique(unknowns$`Sample IDs`)
-
-predict_unknowns <- function(sample_name, data) {
-  data <- filter(data, `Sample IDs` == sample_name) %>%
-    group_by(`Sample IDs`, Dilutions) %>%
-    summarize(
-      median_RAF = median(RAF),
-      sd_RAF = sd(RAF),
-      RAF = median(RAF),
-      Dilutions = mean(Dilutions)
-    )
-  split_name <- str_split(sample_name, "_")
-  sample_id <- split_name[[1]][1]
-  timing <- split_name[[1]][2]
-  data.frame(
-    `Sample IDs` = c(sample_id),
-    Timing = timing,
-    real_dilutions = c(data$Dilutions),
-    Dilutions = c(predict(model, data)),
-    mean_RAF = data$RAF,
-    median_RAF = c(data$median_RAF),
-    sd_RAF = c(data$sd_RAF),
-    check.names = FALSE
-  ) %>%
-    mutate(
-      loss = Dilutions - real_dilutions,
-      percent_recovery = 10^(loss) * 100,
-    )
-}
-
-predictions <- lapply(
-  sample_names, 
-  predict_unknowns, 
-  data=unknowns
-) %>%
-  bind_rows()
-
-write.csv(predictions, "spike_data/predictions.csv", row.names = FALSE)
-
-
-
-# Make the figure ---------------------------------------------------------
-
-
-
-df_sum %>%
-  filter(
-    `Sample IDs` == "P",
-    Dilutions != -3
-  ) %>%
-  ggplot(aes(
-    Dilutions, mean_RAF,
-    ymin = median_RAF - sd_RAF, ymax = median_RAF + sd_RAF
-  )) +
-  geom_smooth(
-    method = glm,
-    se = TRUE,
-    linetype = "dashed",
-    colour = "black"
+df_standard %>%
+  ggplot(aes(Dilutions, AUC, ymin = AUC - sd_AUC, ymax = AUC + sd_AUC)) +
+  stat_smooth(aes(Dilutions, AUC), method = "lm", fullrange = TRUE, se = FALSE, linetype = "dashed") +
+  geom_point(size = dotsize) +
+  geom_errorbar(width = 0.1) +
+  geom_segment( # hline
+    aes(y = AUC, x = Dilutions, xend = real_dilutions, color = dil_factors),
+    data = predictions, show.legend = FALSE, linewidth = 1.2
   ) +
-  geom_point(size = 3) +
-  geom_errorbar(width = 0.05) +
+  geom_segment( # vline
+    aes(y = AUC, yend = real_auc + 60, x = Dilutions, color = dil_factors),
+    data = predictions,
+    arrow = arrow(type = "closed", angle = 20), show.legend = FALSE, linewidth = 1.2
+  ) +
   geom_point(
-    aes(
-      x = Dilutions, 
-      y = mean_RAF,
-      color = `Sample IDs`
-    ), 
-    predictions %>% filter(is.na(Timing) & real_dilutions == -3),
-    size = 3
+    aes(x = real_dilutions, y = AUC, color = dil_factors),
+    predictions,
+    size = 3, show.legend = T
   ) +
   geom_errorbar(
-    aes(
-      ymin = median_RAF - sd_RAF, ymax = median_RAF + sd_RAF,
-      color = `Sample IDs`
-    ),
-    predictions %>% filter(is.na(Timing) & real_dilutions == -3),
-    width = 0.05
+    aes(x = Dilutions, ymin = real_auc - sd_AUC, ymax = real_auc + sd_AUC, color = dil_factors),
+    predictions,
+    width = 0.1, show.legend = FALSE
   ) +
   geom_point(
+    aes(x = Dilutions, y = real_auc, color = dil_factors),
+    predictions,
+    size = dotsize, show.legend = FALSE
+  ) +
+  geom_text(
     aes(
-      x = real_dilutions,
-      y = mean_RAF,
-      color = `Sample IDs`,
+      label = sprintf("Recovery = %s%%", signif(percent_recovery, 2)),
+      x = (Dilutions + real_dilutions) / 2, y = AUC + 60, color = dil_factors
     ),
-    predictions %>% filter(is.na(Timing) & real_dilutions == -3),
-    shape = "triangle",
-    size = 3
+    data = predictions, size = 6, show.legend = FALSE, fontface = 2
   ) +
-  geom_hline(
-    aes(
-      yintercept=mean_RAF, color = `Sample IDs`
-    ), 
-    data = predictions %>% filter(is.na(Timing) & real_dilutions == -3),
-    linetype = "dashed"
-  ) +
-  # geom_text(label = expression(R^2 == 0.5834), x = -6.5, y = 0.15) +
-  ggtitle("Positive Standard Curve") +
+  stat_cor(aes(label = paste(after_stat(rr.label), after_stat(p.label), sep = "~`,`~")), size = 6, fontface = 2) +
+  scale_color_manual(values = c("darkcyan", "darkorange")) +
   xlab("Log Dilution Factor") +
-  ylab("Rate of Amyloid Formation (1/s)") +
-  theme_classic() +
+  ylab("Area Under the Curve") +
+  main_theme +
+  labs(
+    color = "Spike Dilution Factor"
+  ) +
   theme(
-    axis.line = element_line(colour = "black"),
-    axis.text = element_text(size = 12),
-    axis.title = element_text(size = 14),
-    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
-    panel.background = element_blank(),
+    legend.position = "inside",
+    legend.position.inside = c(.9, .25),
+    legend.background = element_blank(),
+    legend.direction = "horizontal",
+    legend.justification = 1,
     panel.grid = element_line(colour = "lightgrey"),
-    panel.border = element_rect(colour = "black", fill = NA, size = 1),
-    strip.background = element_blank(),
-    strip.placement = "outside"
   )
 
-ggsave("figures/titration_curve.png", width = 12, height = 6.25)  
+ggsave("figures/ppe/titration_curve.png", width = 12, height = 8)
+
+
+# Save output ------------------------------------------------------------
+
+
+write.csv(df_sum, "data/spike_data/summary.csv", row.names = FALSE)
+write.csv(predictions, "data/spike_data/predictions.csv", row.names = FALSE)

@@ -1,0 +1,75 @@
+Sample IDs,ID,Collector,Lat,Long,Period in environment,Notes
+28,BF1 Top SS,QY,47.7002,-94.65286,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+26,BF1 Bottom SS,QY,47.7002,-94.65286,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+27,BF1 Plastic,QY,47.7002,-94.65286,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+31,BF2 Top SS,QY,47.69913,-94.65035,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+29,BF2 Bottom SS,QY,47.69913,-94.65035,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+30,BF2 Plastic,QY,47.69913,-94.65035,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+34,BF3 Top SS,QY,47.69849,-94.65187,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+32,BF3 Bottom SS,QY,47.69849,-94.65187,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+33,BF3 Plastic,QY,47.69849,-94.65187,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+37,BF4 Top SS,QY,47.69935,-94.65315,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+35,BF4 Bottom SS,QY,47.69935,-94.65315,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+36,BF4 Plastic,QY,47.69935,-94.65315,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+40,BF5 Top SS,QY,47.69951,-94.65256,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+38,BF5 Bottom SS,QY,47.69951,-94.65256,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+39,BF5 Plastic,QY,47.69951,-94.65256,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+43,BF6 Top SS,QY,47.69957,-94.6523,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+41,BF6 Bottom SS,QY,47.69957,-94.6523,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+42,BF6 Plastic,QY,47.69957,-94.6523,Sep 2021 - Sep 2021,Pre-exposure controls taken outside of exclosure in staging area
+1,Ctrl1  SS,JB,47.48844,-94.47566,Aug 2023 - July 2024,"""control"" location, Bartz property"
+2,Ctrl2  SS,JB,47.48844,-94.47566,Aug 2023 - July 2024,"""control"" location, Bartz property"
+3,Ctrl3  SS,JB,47.48844,-94.47566,Aug 2023 - July 2024,"""control"" location, Bartz property"
+11a,BF1 Top SS,JB,47.7002,-94.65286,,"New, clean plate preswab (preswab of tube IDs 4-15)"
+12a,BF1 Bottom SS,JB,47.7002,-94.65286,,"New, clean plate preswab (preswab of tube IDs 4-15)"
+13a,BF2 Top SS,JB,47.69913,-94.65035,,"New, clean plate preswab (preswab of tube IDs 4-15)"
+14a,BF2 Bottom SS,JB,47.69913,-94.65035,,"New, clean plate preswab (preswab of tube IDs 4-15)"
+15a,BF3 Top SS,JB,47.69849,-94.65187,,"New, clean plate preswab (preswab of tube IDs 4-15)"
+16a,BF3 Bottom SS,JB,47.69849,-94.65187,,"New, clean plate preswab (preswab of tube IDs 4-15)"
+17a,BF4 Top SS,JB,47.69935,-94.65315,,"New, clean plate preswab (preswab of tube IDs 4-15)"
+18a,BF4 Bottom SS,JB,47.69935,-94.65315,,"New, clean plate preswab (preswab of tube IDs 4-15)"
+19a,BF5 Top SS,JB,47.69951,-94.65256,,"New, clean plate preswab (preswab of tube IDs 4-15)"
+20a,BF5 Bottom SS,JB,47.69951,-94.65256,,"New, clean plate preswab (preswab of tube IDs 4-15)"
+21a,BF6 Top SS,JB,47.69957,-94.6523,,"New, clean plate preswab (preswab of tube IDs 4-15)"
+22a,BF6 Bottom SS,JB,47.69957,-94.6523,,"New, clean plate preswab (preswab of tube IDs 4-15)"
+23a,Blank after BF1,JB,,,,"New, clean plate preswab (preswab of tube IDs 4-15)"
+24a,Blank after BF3,JB,,,,"New, clean plate preswab (preswab of tube IDs 4-15)"
+25a,Blank after BF5,JB,,,,"New, clean plate preswab (preswab of tube IDs 4-15)"
+4,BF1 Top SS,MS,47.7002,-94.65286,Aug 2022 - Oct 2023,~ 5 ft from ground
+5,BF1 Bottom SS,MS,47.7002,-94.65286,Aug 2022 - Oct 2023,~ 5 ft from ground
+6,BF2 Top SS,MS,47.69913,-94.65035,Aug 2022 - Oct 2023,~ 5 ft from ground
+7,BF2 Bottom SS,MS,47.69913,-94.65035,Aug 2022 - Oct 2023,~ 5 ft from ground
+8,BF3 Top SS,MS,47.69849,-94.65187,Aug 2022 - Oct 2023,~ 5 ft from ground
+9,BF3 Bottom SS,MS,47.69849,-94.65187,Aug 2022 - Oct 2023,~ 5 ft from ground
+10,BF4 Top SS,MS,47.69935,-94.65315,Aug 2022 - Oct 2023,~1 ft from ground
+11,BF4 Bottom SS,MS,47.69935,-94.65315,Aug 2022 - Oct 2023,~1 ft from ground
+12,BF5 Top SS,PL,47.69951,-94.65256,Aug 2022 - Aug 2023,~ 5 ft from ground
+13,BF5 Bottom SS,PL,47.69951,-94.65256,Aug 2022 - Aug 2023,~ 5 ft from ground
+14,BF6 Top SS,PL,47.69957,-94.6523,Aug 2022 - Aug 2023,~ 2 ft from ground
+15,BF6 Bottom SS,PL,47.69957,-94.6523,Aug 2022 - Aug 2023,~ 2 ft from ground
+16,BF1 Top SS,TW/DK,47.7002,-94.65286,Oct 2023 - Oct 2024,
+17,BF1 Bottom SS,TW/DK,47.7002,-94.65286,Oct 2023 - Oct 2024,
+18,BF2 Top SS,TW/DK,47.69913,-94.65035,Oct 2023 - Oct 2024,
+19,BF2 Bottom SS,TW/DK,47.69913,-94.65035,Oct 2023 - Oct 2024,
+20,BF3 Top SS,TW/DK,47.69849,-94.65187,Oct 2023 - Oct 2024,
+21,BF3 Bottom SS,TW/DK,47.69849,-94.65187,Oct 2023 - Oct 2024,
+22,BF4 Top SS,TW/DK,47.69935,-94.65315,Oct 2023 - Oct 2024,
+23,BF4 Bottom SS,TW/DK,47.69935,-94.65315,Oct 2023 - Oct 2024,
+24,BF5 Top SS,TW/DK,47.69951,-94.65256,Oct 2023 - Oct 2024,Whole bird feeder replaced with new plates Oct 2023
+,BF5 Bottom SS,TW/DK,47.69951,-94.65256,Oct 2023 - Oct 2024,Whole bird feeder replaced with new plates Oct 2023
+25,BF6 Top SS,TW/DK,47.69957,-94.6523,Oct 2023 - Oct 2024,Whole bird feeder replaced with new plates Oct 2023
+,BF6 Bottom SS,TW/DK,47.69957,-94.6523,Oct 2023 - Oct 2024,Whole bird feeder replaced with new plates Oct 2023
+44,BF1 Top SS,MS,47.7002,-94.65286,Oct 2024 - Oct 2025,
+45,BF1 Bottom SS,MS,47.7002,-94.65286,Oct 2024 - Oct 2025,
+46,BF2 Top SS,MS,47.69913,-94.65035,Oct 2024 - Oct 2025,
+47,BF2 Bottom SS,MS,47.69913,-94.65035,Oct 2024 - Oct 2025,
+48,BF3 Top SS,MS,47.69849,-94.65187,Oct 2024 - Oct 2025,
+49,BF3 Bottom SS,MS,47.69849,-94.65187,Oct 2024 - Oct 2025,
+50,BF4 Top SS,MS,47.69935,-94.65315,Oct 2024 - Oct 2025,
+51,BF4 Bottom SS,MS,47.69935,-94.65315,Oct 2024 - Oct 2025,
+52,BF5 Top SS,PL,47.69951,-94.65256,Oct 2024 - Oct 2025,
+53,BF5 Bottom SS,PL,47.69951,-94.65256,Oct 2023 - Oct 2025,
+54,BF6 Top SS,PL,47.69957,-94.6523,Oct 2024 - Oct 2025,
+55,BF6 Bottom SS,PL,47.69957,-94.6523,Oct 2023 - Oct 2025,
+56,PL18-1 Top SS,PL,47.69953,-94.65258,Sep 2021 - Oct 2025,on the ground
+57,PL18-2 Top SS,PL,47.69953,-94.65258,Sep 2021 - Oct 2025,on the ground
