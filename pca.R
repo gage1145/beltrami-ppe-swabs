@@ -92,61 +92,20 @@ fig <- df_log %>%
     x = ~ms,
     y = ~auc,
     z = ~mpr,
+    color = ~location,
+    colors = c("darkorange", "darkcyan"),
+    opacity = 0.5,
     type = "scatter3d",
+    mode = "markers",
     size = 1
-  ) %>%
-  add_trace(
-    data = df_pred,
-    x = ~ms,
-    y = ~auc,
-    z = ~pred,
-    type = "scatter3d",
-    mode = "lines"
   )
-
-df_long %>%
-  filter(transformation == "log") %>%
-  arrange(pred) %>%
-  plot_ly() %>%
-  add_trace(
-    x = ~ms,
-    y = ~auc,
-    z = ~mpr,
-    type = "scatter3d",
-    size = 1
-  ) %>%
-  add_trace(
-    data = df_pred_log,
-    x = ~ms,
-    y = ~auc,
-    z = ~pred,
-    type = "scatter3d",
-    mode = "lines"
-  )
-
-
-metrics <- c("mpr", "mpr_log", "ms", "ms_log", "auc", "auc_log")
-metric_combos <- as.data.frame(t(combn(metrics, 2)))
-colnames(metric_combos) <- c("xval", "yval")
-metric_combos %<>%
-  filter(
-    str_detect(xval, yval, negate=TRUE),
-    str_detect(yval, xval, negate=TRUE)
-  )
-
-# Get correlation values for each pair of metrics.
-cor_mat <- df_ %>%
-  select(mpr, ms, auc) %>%
-  cor()
-write.csv(cor_mat, "data/pca/cor_mat.csv")
-
-
+fig
 
 
 # Principal Component Analysis -------------------------------------------
 
 
-pca_res <- df_ %>%
+pca_res <- df_log %>%
   select(mpr, ms, auc) %>%
   prcomp(scale. = TRUE) %>%
   summary()
