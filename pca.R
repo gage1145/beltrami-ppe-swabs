@@ -5,6 +5,7 @@ library(modelr)
 library(magrittr)
 library(broom)
 library(scales)
+library(plotly)
 
 main_theme <- theme(
   plot.title = element_text(size = 30, hjust = 0.5),
@@ -82,12 +83,76 @@ df_ <- df_ %>%
 
 write.csv(df_, "data/pca/combined.csv", row.names=FALSE)
 
-df_ %>%
-  pivot_longer(c(mpr, ms, auc, mpr_log, ms_log, auc_log), names_to = "metric") %>%
-  ggplot(aes(value)) +
-  geom_histogram(position = "stack", bins=50) +
-  facet_grid(cols=vars(metric), scales="free") 
 
+# Linear regression
+met_mod <- lm(mpr ~ ms + auc + transformation, data = df_long)
+
+rr <- modelr::rsquare(met_mod, df_long %>% filter(transformation == "none"))
+rr_log <- modelr::rsquare(met_mod, df_long %>% filter(transformation == "log"))
+
+df_long %<>%
+  mutate(pred = predict(met_mod, type = "response"))
+
+df_long_sum <- df_long %>%
+  summarize(
+    across(c(mpr, ms, auc), list(min = min, max = max)),
+    .by = transformation
+  )
+
+df_pred <- tibble(
+  ms = seq(df_long_sum$ms_min[1], df_long_sum$ms_max[1], length.out = 10),
+  auc = seq(df_long_sum$auc_min[1], df_long_sum$auc_max[1], length.out = 10),
+  transformation = "none"
+) %>%
+  add_predictions(met_mod)
+
+df_pred_log <- tibble(
+  ms = seq(df_long_sum$ms_min[2], df_long_sum$ms_max[2], length.out = 10),
+  auc = seq(df_long_sum$auc_min[2], df_long_sum$auc_max[2], length.out = 10),
+  transformation = "log"
+) %>%
+  add_predictions(met_mod)
+
+
+df_long %>%
+  filter(transformation == "none") %>%
+  arrange(pred) %>%
+  plot_ly() %>%
+  add_trace(
+    x = ~ms,
+    y = ~auc,
+    z = ~mpr,
+    type = "scatter3d",
+    size = 1
+  ) %>%
+  add_trace(
+    data = df_pred,
+    x = ~ms,
+    y = ~auc,
+    z = ~pred,
+    type = "scatter3d",
+    mode = "lines"
+  )
+
+df_long %>%
+  filter(transformation == "log") %>%
+  arrange(pred) %>%
+  plot_ly() %>%
+  add_trace(
+    x = ~ms,
+    y = ~auc,
+    z = ~mpr,
+    type = "scatter3d",
+    size = 1
+  ) %>%
+  add_trace(
+    data = df_pred_log,
+    x = ~ms,
+    y = ~auc,
+    z = ~pred,
+    type = "scatter3d",
+    mode = "lines"
+  )
 
 
 metrics <- c("mpr", "mpr_log", "ms", "ms_log", "auc", "auc_log")
@@ -100,112 +165,11 @@ metric_combos %<>%
   )
 
 # Get correlation values for each pair of metrics.
-cor_df <- pmap_dfr(
-  metric_combos,
-  function(xval, yval) {
-    if (str_detect(xval, yval) | str_detect(yval, xval)) {
-      return()
-    }
-    cor_val <- df_ %>%
-      select(!!sym(xval), !!sym(yval)) %>%
-      cor(use="pairwise.complete.obs")
-    cor_val <- cor_val[2,1]
-    tibble(
-      xval = xval, 
-      yval = yval, 
-      cor_val = cor_val, 
-      log_x = str_detect(xval, "log"), 
-      log_y = str_detect(yval, "log"))
-  } %>%
-    mutate(across(c(xval, yval), ~ str_remove(., "_log")))
-) %>%
-  arrange(desc(cor_val)) %>%
-  filter(log_x == log_y)
+cor_mat <- df_ %>%
+  select(mpr, ms, auc) %>%
+  cor()
+write.csv(cor_mat, "data/pca/cor_mat.csv")
 
-# df_cor_sum <- cor_df %>%
-#   filter(
-#     cor_val == max(cor_val), 
-#     .by = c(xval, yval)
-#   ) %>%
-#   mutate(
-#     xval = ifelse(log_x, paste0(xval, "_log"), xval),
-#     yval = ifelse(log_y, paste0(yval, "_log"), yval)
-  # )
-
-metric_combos <- cor_df %>%
-  arrange(log_x, xval, yval) %>%
-  mutate(
-    xval = ifelse(log_x, paste0(xval, "_log"), xval),
-    yval = ifelse(log_y, paste0(yval, "_log"), yval)
-  ) %>%
-  select(xval, yval)
-
-mc_no_log <- metric_combos %>%
-  filter(str_detect(xval, "_log") == FALSE & str_detect(yval, "_log") == FALSE)
-
-make_cor_plot <- function(xval, yval) {
-  df_log <- df_ %>%
-    mutate(across(c(!!sym(xval), !!sym(yval)), log))
-
-  form <- as.formula(sprintf("%s ~ %s", yval, xval))
-
-  mod <- lm(form, df_)
-  mod_log <- lm(form, df_log)
-
-  grid <- df_ %>%
-    data_grid(!!sym(xval)) %>%
-    add_predictions(mod, var = "untransformed")
-
-  grid_log <- df_log %>%
-    data_grid(!!sym(xval)) %>%
-    add_predictions(mod_log, var = "log_transformed") %>%
-    mutate(log_transformed = exp(log_transformed))
-
-  grid <- grid %>%
-    mutate(log_transformed = grid_log$log_transformed) %>%
-    pivot_longer(c(untransformed, log_transformed), names_to = "type", values_to = "pred")
-
-  rr <- glance(mod)$r.squared
-  rr_log <- glance(mod_log)$r.squared
-
-  max_y <- max(df_[[yval]], na.rm = TRUE)
-  min_y <- min(df_[[yval]], na.rm = TRUE)
-  max_x <- max(df_[[xval]], na.rm = TRUE)
-  min_x <- min(df_[[xval]], na.rm = TRUE)
-
-  rr_label_df <- tibble(
-    x = c(min_x, min_x),
-    y = c(0.95 * max_y, 0.65 * max_y),
-    hjust = c(0, 0),
-    label = c(paste("Untransformed R^2 =", round(rr, 3)), paste("Log-Transformed R^2 =", round(rr_log, 3))),
-    type = c("untransformed", "log_transformed")
-  )
-
-  df_ %>%
-    ggplot(aes(x = !!sym(xval), y = !!sym(yval))) +
-    geom_hex(bins=50) +
-    geom_line(aes(y=pred, color=type), data=grid, linewidth=2) +
-    geom_label(
-      aes(x = x, y = y, label = label, color=type, hjust=hjust), data=rr_label_df,
-      size = 5, vjust = 0, show.legend = FALSE
-    ) +
-    scale_fill_gradient(low="cyan4", high="cyan2") +
-    scale_color_manual(values=c("#d70500", "darkred")) +
-    scale_x_log10(limits=c(min(df_[[xval]], na.rm=TRUE), max(df_[[xval]], na.rm=TRUE))) +
-    scale_y_log10(limits=c(min(df_[[yval]], na.rm=TRUE), max(df_[[yval]], na.rm=TRUE))) +
-    labs(
-      fill = "Count"
-    ) +
-    main_theme +
-    theme(
-      legend.title = element_text(vjust = 1),
-      legend.key.width = unit(7, "cm")
-    ) 
-}
-
-cor_plots <- pmap(mc_no_log, make_cor_plot)
-ggarrange(plotlist = cor_plots, align = "hv", ncol = 3, common.legend = TRUE, legend="none")
-ggsave("corplot.png", path = "figures/pca", bg="white", width = 12, height = 6)
 
 
 
