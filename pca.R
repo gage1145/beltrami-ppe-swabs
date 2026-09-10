@@ -18,7 +18,11 @@ main_theme <- theme(
 
 
 df_ppe <- read.csv("data/ppe/updated_metadata.csv", check.names = FALSE) %>%
-  filter(surface == "boot") %>%
+  filter(
+    surface == "boot",
+    location != "perimeter",
+    timing != "post-decon"
+  ) %>%
   select(sample_id, mpr, ms, auc, location) %>%
   mutate(
     type = "ppe",
