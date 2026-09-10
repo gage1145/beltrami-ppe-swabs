@@ -92,5 +92,5 @@ df_ %>%
     legend.title = element_text(vjust = 1)
   )
 
-ggsave("map.png", path="figures/bird-feeder", width=12, height=11)
+ggsave("map.jpg", path="figures/bird-feeder", width=12, height=11, dpi=600)
 
