@@ -110,15 +110,6 @@ pca_res <- df_log %>%
   prcomp(scale. = TRUE) %>%
   summary()
 
-pca_res_log <- df_ %>%
-  select(mpr, ms, auc) %>%
-  mutate(across(everything(), log)) %>%
-  prcomp(scale. = TRUE) %>%
-  summary()
-
-sprintf("Untransformed PC1 = %.2f", pca_res$importance[2,1])
-sprintf("Log-transformed PC1 = %.2f", pca_res_log$importance[2,1])
-
 df_pca <- df_ %>%
   bind_cols(pca_res$x)
 
