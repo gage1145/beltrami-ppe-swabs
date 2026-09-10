@@ -82,39 +82,11 @@ ggarrange(mprauc_plot, mprms_plot, msauc_plot, ncol=3)
 ggsave("cor_log.jpg", path="figures/pca", width=12, height=6, dpi=600)
 
 
-# Linear regression
-met_mod <- lm(mpr ~ ms + auc + transformation, data = df_long)
-
-rr <- modelr::rsquare(met_mod, df_long %>% filter(transformation == "none"))
-rr_log <- modelr::rsquare(met_mod, df_long %>% filter(transformation == "log"))
-
-df_long %<>%
-  mutate(pred = predict(met_mod, type = "response"))
-
-df_long_sum <- df_long %>%
-  summarize(
-    across(c(mpr, ms, auc), list(min = min, max = max)),
-    .by = transformation
-  )
-
-df_pred <- tibble(
-  ms = seq(df_long_sum$ms_min[1], df_long_sum$ms_max[1], length.out = 10),
-  auc = seq(df_long_sum$auc_min[1], df_long_sum$auc_max[1], length.out = 10),
-  transformation = "none"
-) %>%
-  add_predictions(met_mod)
-
-df_pred_log <- tibble(
-  ms = seq(df_long_sum$ms_min[2], df_long_sum$ms_max[2], length.out = 10),
-  auc = seq(df_long_sum$auc_min[2], df_long_sum$auc_max[2], length.out = 10),
-  transformation = "log"
-) %>%
-  add_predictions(met_mod)
+# 3D Plot ----------------------------------------------------------------
 
 
-df_long %>%
-  filter(transformation == "none") %>%
-  arrange(pred) %>%
+fig <- df_log %>%
+  mutate(location = ifelse(location %in% c("dump site", "inner"), "Core", "Non-Core")) %>%
   plot_ly() %>%
   add_trace(
     x = ~ms,
