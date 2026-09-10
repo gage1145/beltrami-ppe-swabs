@@ -13,16 +13,16 @@
 # perimeter samples and post-decon timing are excluded.
 #
 # Exported figures (figures/ppe/):
-#   corplot.png                  - pairwise metric correlations (hex + lm fit)
-#   distributions.png            - metric histograms split by a manual cutoff
-#   pca_plot.png                 - PCA score scatter (PC pairs)
-#   comparisons.png              - scaled metrics by location, faceted by timing
-#   roc.png                      - ROC curves per metric/timing
-#   timing_box.png               - PC1 by timing, faceted by location
-#   location_box.png             - PC1 by location, faceted by timing
-#   boxplots.png                 - timing + location boxplots stacked (A/B)
-#   surface-location_box.png     - PC1 by boot side (top/bottom)
-#   location_timing_density.png  - PC1 density ridges by location/timing
+#   corplot.jpg                  - pairwise metric correlations (hex + lm fit)
+#   distributions.jpg            - metric histograms split by a manual cutoff
+#   pca_plot.jpg                 - PCA score scatter (PC pairs)
+#   comparisons.jpg              - scaled metrics by location, faceted by timing
+#   roc.jpg                      - ROC curves per metric/timing
+#   timing_box.jpg               - PC1 by timing, faceted by location
+#   location_box.jpg             - PC1 by location, faceted by timing
+#   boxplots.jpg                 - timing + location boxplots stacked (A/B)
+#   surface-location_box.jpg     - PC1 by boot side (top/bottom)
+#   location_timing_density.jpg  - PC1 density ridges by location/timing
 #
 # Several intermediate plots (metric ridges, normality diagnostics, logistic
 # smooths) are drawn for inspection only and are deliberately not exported.
@@ -147,7 +147,7 @@ pca_df %>%
 #
 # Scatter of each PC pair, points coloured by location and overlaid with a
 # 2-cluster k-means ellipse, to show whether locations separate in PC space.
-# pca_plot.png.
+# pca_plot.jpg.
 
 
 pca_combos <- as.data.frame(t(combn(paste0("PC", seq(length(pca_res$scale))), 2))) %>%
@@ -299,7 +299,7 @@ ggarrange(
   font.label = list(size = 24), widths = c(3,2)
 )
 
-ggsave("pca_plot.png", path="figures/ppe", width = 12, height = 10, bg="white")
+ggsave("pca_plot.jpg", path="figures/ppe", width = 12, height = 10, bg="white", dpi=600)
 
 
 # Metric comparisons by location -----------------------------------------
@@ -321,7 +321,7 @@ pca_df %>%
 #
 # For each metric x timing, build an ROC curve for discriminating Core vs.
 # negative site and record the AUC (with CI). The curves are overlaid per
-# timing to compare which metric discriminates best. roc.png.
+# timing to compare which metric discriminates best. roc.jpg.
 get_rocs <- function(m, t, df) {
     temp_df <- df %>%
       filter(
@@ -339,7 +339,7 @@ get_rocs <- function(m, t, df) {
 
 # Long-format metrics + PCs, each rescaled to 0-1 for a common axis, compared
 # between locations within each timing via Wilcoxon tests (significance stars).
-# comparisons.png.
+# comparisons.jpg.
 pca_long <- pca_df %>%
   pivot_longer(c(mpr, ms, auc, PC1, PC2, PC3), names_to="metric") %>%
   mutate(metric = factor(metric, levels=c("mpr", "ms", "auc", "PC1", "PC2", "PC3")))
@@ -365,14 +365,14 @@ roc_df %>%
   theme(
     legend.title = element_blank(),
   )
-ggsave("roc.png", path="figures/ppe", width=12, height=12)
+ggsave("roc.jpg", path="figures/ppe", width=12, height=12, dpi=600)
 
 
 # PC1 Box Plots ----------------------------------------------------------
 #
 # PC1 (the contamination score) compared across the experimental factors with
 # Wilcoxon tests. timing_box and location_box are also stacked into a single
-# labelled A/B panel (boxplots.png), and PC1 is compared across boot side.
+# labelled A/B panel (boxplots.jpg), and PC1 is compared across boot side.
 
 sl_pvals <- pca_df %>%
   summarize(
